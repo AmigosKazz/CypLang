@@ -148,3 +148,26 @@ Token* parse_identifier(Lexer* lexer) {
 
     return token;
 }
+
+// parse a number
+Token* parse_number(Lexer* lexer) {
+    int start_col = lexer->column;
+    int start_pos = lexer->position;
+
+    while (lexer->current_char != '\0' && isdigit(lexer->current_char)) {
+        advance(lexer);
+    }
+
+    int length = lexer->position - start_pos;
+    char* number = (char*)malloc(length + 1);
+    strncpy(number, lexer->source + start_pos, length);
+    number[length] = '\0';
+
+    Token* token = (Token*)malloc(sizeof(Token));
+    token->type = TOKEN_NUMBER;
+    token->value = number;
+    token->line = lexer->line;
+    token->column = start_col;
+
+    return token;
+}
