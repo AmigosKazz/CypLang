@@ -171,3 +171,34 @@ Token* parse_number(Lexer* lexer) {
 
     return token;
 }
+
+// parse a string
+Token* parse_string(Lexer* lexer) {
+    int start_col = lexer->column;
+    int start_pos = lexer->position + 1; // skip the opening quote
+    advance(lexer); // move past the opening quote
+
+    while (lexer->current_char != '\0' && lexer->current_char != '"') {
+        advance(lexer);
+    }
+
+    if (lexer->current_char == '\0') {
+        fprintf(stderr, "Error: Unterminated string at line %d, column %d\n", lexer->line, lexer->column);
+        exit(EXIT_FAILURE);
+    }
+
+    int length = lexer->position - start_pos;
+    char* str = (char*)malloc(length + 1);
+    strncpy(str, lexer->source + start_pos, length);
+    str[length] = '\0';
+
+    advance(lexer); // move past the closing quote
+
+    Token* token = (Token*)malloc(sizeof(Token));
+    token->type = TOKEN_STRING;
+    token->value = str;
+    token->line = lexer->line;
+    token->column = start_col;
+
+    return token;
+}
