@@ -6,15 +6,6 @@
 
 Interpreter and (coming soon) compiler for the CypLang programming language. This project is developed in C as part of an algorithms and compilation course.
 
-## ✨ Features (Phase 1: Interpreter)
-
-- Variable declaration (`var`).
-- Data types: Integer numbers.
-- Basic arithmetic operations: `+`, `-`, `*`, `/`.
-- Console output function: `afficher()` (display).
-- Hand-written lexical and syntax analyzer.
-- Interpretation via Abstract Syntax Tree (AST) traversal.
-
 ## 🚀 Quick Start
 
 ### Prerequisites
