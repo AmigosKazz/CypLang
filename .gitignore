@@ -1,0 +1,14 @@
+/cmake-cmake-build-*/
+# Fichiers d'objets et exécutables
+*.o
+*.a
+*.so
+*.exe
+
+# user configuration
+*.user
+
+.*.swp
+
+#idea
+.idea
