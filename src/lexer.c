@@ -82,7 +82,7 @@ void advance(Lexer* lexer) {
     }
 
     lexer->position++;
-    if (lexer->source[lexer->position] == '\0') {
+    if (lexer->source[lexer->position] != '\0') {
         lexer->current_char = lexer->source[lexer->position];
     } else {
         lexer->current_char = '\0'; // end of file
