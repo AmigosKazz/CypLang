@@ -9,7 +9,7 @@ typedef enum {
     TOKEN_IDENTIFIER,
     TOKEN_NUMBER,
     TOKEN_STRING,
-    TOKEN_CARACTER,
+    TOKEN_CHARACTER,
 
     //Operators and punctuation
     TOKEN_COMMA,
@@ -140,7 +140,7 @@ TokenType check_keyword(const char* identifier) {
     if (strcmp(identifier, "type") == 0) return TOKEN_TYPE;
     if (strcmp(identifier, "vide") == 0) return TOKEN_VIDE;
     if (strcmp(identifier, "chaine") == 0) return TOKEN_CHAINE;
-    if (strcmp(identifier, "caractere") == 0) return TOKEN_CARACTERE;
+    if (strcmp(identifier, "caractere") == 0) return TOKEN_CHARACTER;
     if (strcmp(identifier, "entier") == 0) return TOKEN_ENTIER;
     if (strcmp(identifier, "reel") == 0) return TOKEN_REEL;
     if (strcmp(identifier, "booleen") == 0) return TOKEN_BOOLEEN;
@@ -235,9 +235,34 @@ Token* parse_string(Lexer* lexer) {
     return token;
 }
 
+Token* parse_character(Lexer* lexer) {
+    int start_col = lexer->column;
+    advance(lexer);
+
+    char value = lexer->current_char;
+    advance(lexer);
+
+    if (lexer->current_char != '\'') {
+        fprintf(stderr, "Error: Unexpected character '%c' at line %d, column %d\n",
+            lexer->line, lexer->column);
+        exit(EXIT_FAILURE);
+    }
+
+    advance(lexer);
+
+    Token* token = (Token*)malloc(sizeof(Token));
+    token->type = TOKEN_CHARACTER;
+    token->value = (char*)malloc(2);
+    token->value[0] = value;
+    token->value[1] = '\0';
+    token->line = lexer->line;
+    token->column = lexer->column;
+
+    return token;
+}
+
 Token* get_the_next_token(Lexer* lexer) {
     while (lexer->current_char != '\0') {
-        // skip whitespace
         if (isspace(lexer->current_char)) {
             skip_whitespace(lexer);
             continue;
@@ -251,21 +276,106 @@ Token* get_the_next_token(Lexer* lexer) {
             return parse_number(lexer);
         }
 
-        // assignment operator <-
+        if (lexer->current_char == '"') {
+            return parse_string(lexer);
+        }
+
+        if (lexer->current_char == '\'') {
+            return parse_character(lexer);
+        }
+
+        // two charcter operators and special tokens
+        int start_col = lexer->column;
+
         if (lexer->current_char == '<') {
-            int start_col = lexer->column;
-            advance(lexer); // move past '<'
-            if (lexer->current_char == '-') {
+            advance(lexer);
+            if (lexer->current_char == '=') {
+                advance(lexer);
+                Token* token = (Token*)malloc(sizeof(Token));
+                token->type = TOKEN_LESS_EQUAL;
+                token->value = strdup("<=");
+                token->line = lexer->line;
+                token->column = lexer->column;
+
+                return token;
+            } else if (lexer->current_char == '-') {
                 advance(lexer);
                 Token* token = (Token*)malloc(sizeof(Token));
                 token->type = TOKEN_ASSIGN;
                 token->value = strdup("<-");
                 token->line = lexer->line;
+                token->column = lexer->column;
+
+                return token;
+            } else {
+                Token* token = (Token*)malloc(sizeof(Token));
+                token->type = TOKEN_LESS;
+                token->value = strdup("<");
+                token->line = lexer->line;
+                token->column = lexer->column;
+
+                return token;
+            }
+        }
+
+        if (lexer->current_char == '>') {
+            advance(lexer);
+            if (lexer->current_char == '=') {
+                advance(lexer);
+                Token* token = (Token*)malloc(sizeof(Token));
+                token->type = TOKEN_GREATER_EQUAL;
+                token->value = strdup(">=");
+                token->line = lexer->line;
+                token->column = start_col;
+                return token;
+            } else {
+                Token* token = (Token*)malloc(sizeof(Token));
+                token->type = TOKEN_GREATER;
+                token->value = strdup(">");
+                token->line = lexer->line;
                 token->column = start_col;
                 return token;
             }
-            // if we reach here, it means we encountered an unexpected character
-            fprintf(stderr, "Error: Unexpected character '%c' at line %d, column %d\n", lexer->current_char, lexer->line, lexer->column);
+        }
+
+        if (lexer->current_char == '!') {
+            advance(lexer);
+            if (lexer->current_char == '=') {
+                advance(lexer);
+                Token* token = (Token*)malloc(sizeof(Token));
+                token->type = TOKEN_BANG_EQUAL;
+                token->value = strdup("!=");
+                token->line = lexer->line;
+                token->column = start_col;
+                return token;
+            } else {
+                Token* token = (Token*)malloc(sizeof(Token));
+                token->type = TOKEN_BANG;
+                token->value = strdup("!");
+                token->line = lexer->line;
+                token->column = start_col;
+                return token;
+            }
+        }
+
+        if (lexer->current_char == '-') {
+            advance(lexer);
+            if (lexer->current_char == '>') {
+                advance(lexer);
+                Token* token = (Token*)malloc(sizeof(Token));
+                token->type = TOKEN_RIGHT_ARROW;
+                token->value = strdup("->");
+                token->line = lexer->line;
+                token->column = start_col;
+                return token;
+            } else {
+                Token* token = (Token*)malloc(sizeof(Token));
+                token->type = TOKEN_MINUS;
+                token->value = strdup("-");
+                token->line = lexer->line;
+                token->column = start_col;
+                return token;
+            }
         }
 
         // OTHER SINGLE CHARACTER TOKENS
@@ -277,23 +387,24 @@ Token* get_the_next_token(Lexer* lexer) {
         token->value[1] = '\0';
 
         switch (lexer->current_char) {
-            case '+' : token->type = TOKEN_PLUS; break;
-            case '-' : token->type = TOKEN_MINUS; break;
-            case '*' : token->type = TOKEN_ASTERISK; break;
-            case 'div' : token->type = TOKEN_DIV; break;
-            case 'mod' : token->type = TOKEN_MOD; break;
-            case '(' : token->type = TOKEN_LPAREN; break;
-            case ')' : token->type = TOKEN_RPAREN; break;
-            case ';' : token->type = TOKEN_SEMICOLON; break;
-            case ',' : token->type = TOKEN_COMMA; break;
+            case '+': token->type = TOKEN_PLUS; break;
+            case '*': token->type = TOKEN_ASTERISK; break;
+            case '/': token->type = TOKEN_SLASH; break;
+            case '=': token->type = TOKEN_EQUAL; break;
+            case '.': token->type = TOKEN_DOT; break;
+            case ',': token->type = TOKEN_COMMA; break;
+            case ';': token->type = TOKEN_SEMICOLON; break;
+            case '(': token->type = TOKEN_LPAREN; break;
+            case ')': token->type = TOKEN_RPAREN; break;
+            case '[': token->type = TOKEN_LBRACK; break;
+            case ']': token->type = TOKEN_RBRACK; break;
             default:
-                // handle error: unexpected character
                 free(token->value);
                 free(token);
                 fprintf(stderr, "Error: Unexpected character '%c' at line %d, column %d\n",
                     lexer->current_char, lexer->line, lexer->column);
                 advance(lexer);
-                continue; // skip to the next character
+                continue;
         }
         advance(lexer); // move to the next character
         return token;
