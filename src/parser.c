@@ -39,7 +39,7 @@ int expect(Parser* parser, Token* type, const char* error_message) {
         return 1;
     }
 
-    fprintf(stderr, "Syntaxe error in line %d, column %d: %s\n",
+    fprintf(stderr, "Syntax error in line %d, column %d: %s\n",
         parser->current_token->line, parser->current_token->column, error_message);
 
     return 0;

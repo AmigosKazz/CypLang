@@ -8,7 +8,7 @@
 
 typedef enum {
     AST_PROGRAM,
-    AST_FUCNTION_DECL,
+    AST_FUNCTION_DECL,
     AST_BLOCK_DECL,
     AST_VARIABLE_DECL,
     AST_PARAMETER,
@@ -22,7 +22,7 @@ typedef enum {
     AST_FOR_STATEMENT,
     AST_RETURN_STATEMENT,
 
-    AST_FUCNTION_CALL,
+    AST_FUNCTION_CALL,
     AST_VARIABLE,
     AST_LITERAL,
 
@@ -87,7 +87,7 @@ typedef struct {
 typedef struct {
     AstNode base;
     TokenType operator;
-    struct AstNode* operator;
+    struct AstNode* operator_node;
     struct AstNode* operand;
 } AstUnaryExpr;
 
@@ -148,7 +148,7 @@ AstNode* create_program_node();
 AstNode* create_function_decl_node(char* name, AstNode** params, int param_count, AstNode* return_type, AstNode* body);
 AstNode* create_block_node();
 AstNode* create_variable_decl_node(char* name, AstNode* type, AstNode* initializer);
-AstNode* create_parameter_node(int name, AstNode* type, AstNode* initializer);
+AstNode* create_parameter_node(char* name, AstNode* type, AstNode* initializer);
 AstNode* create_assignment_node(AstNode* target, AstNode* value);
 AstNode* create_binary_expr_node(AstNode* left, TokenType operator, AstNode* right);
 AstNode* create_unary_expr_node(TokenType operator, AstNode* operand);
