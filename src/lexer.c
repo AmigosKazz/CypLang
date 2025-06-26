@@ -9,40 +9,62 @@ typedef enum {
     TOKEN_IDENTIFIER,
     TOKEN_NUMBER,
     TOKEN_STRING,
-    TOKEN_ASSIGN,
-    TOKEN_PLUS,
+    TOKEN_CARACTER,
+
+    //Operators and punctuation
+    TOKEN_COMMA,
+    TOKEN_SEMICOLON,
+    TOKEN_DOT,
     TOKEN_MINUS,
-    TOKEN_MULTIPLY,
-    TOKEN_DIVIDE,
-    TOKEN_MODULO,
+    TOKEN_PLUS,
+    TOKEN_ASTERISK,
+    TOKEN_SLASH,
+    TOKEN_EQUAL,
+    TOKEN_GREATER,
+    TOKEN_GREATER_EQUAL,
+    TOKEN_LESS,
+    TOKEN_LESS_EQUAL,
+    TOKEN_BANG,
+    TOKEN_BANG_EQUAL,
     TOKEN_LPAREN,
     TOKEN_RPAREN,
-    TOKEN_SEMICOLON,
-    TOKEN_COMMA,
+    TOKEN_LBRACK,
+    TOKEN_RBRACK,
+    TOKEN_ASSIGN,
+    TOKEN_RIGHT_ARROW,
 
     // Keywords
-    TOKEN_SI,
-    TOKEN_ALORS,
-    TOKEN_SINON,
-    TOKEN_FINSI,
-    TOKEN_TANTQUE,
+    TOKEN_DEBFONC,
+    TOKEN_FINFONC,
     TOKEN_FAIRE,
     TOKEN_FINFAIRE,
+    TOKEN_SI,
+    TOKEN_FINSI,
+    TOKEN_ALORS,
+    TOKEN_SINON,
+    TOKEN_TANTQUE,
     TOKEN_POUR,
     TOKEN_HAUT,
     TOKEN_BAS,
-    TOKEN_REPETER,
-    TOKEN_JUSQUA,
+    TOKEN_ET,
+    TOKEN_OU,
+    TOKEN_NON,
+    TOKEN_DIV,
+    TOKEN_MOD,
+    TOKEN_RETOURNER,
+    TOKEN_STRUCTURE,
+    TOKEN_TYPE,
+    TOKEN_VIDE,
+    TOKEN_CHAINE,
     TOKEN_ENTIER,
     TOKEN_REEL,
-    TOKEN_CARACTERE,
     TOKEN_BOOLEEN,
-    TOKEN_VIDE,
-    TOKEN_ECRIRE,
-    TOKEN_LIRE,
-    TOKEN_RETOURNER,
-    TOKEN_DEBFONC,
-    TOKEN_FINFONC,
+    TOKEN_VRAI,
+    TOKEN_FAUX,
+    TOKEN_NIL,
+    TOKEN_D,                // d(for data parameter)
+    TOKEN_R,                // r(for result parameter)
+    TOKEN_DR                // dr(for data-result parameter)
 } TokenType;
 
 
@@ -95,29 +117,39 @@ void skip_whitespace(Lexer* lexer) {
     }
 }
 
-TokenType check_keyword(char* identifier) {
+TokenType check_keyword(const char* identifier) {
+    if (strcmp(identifier, "debfonc") == 0) return TOKEN_DEBFONC;
+    if (strcmp(identifier, "finfonc") == 0) return TOKEN_FINFONC;
+    if (strcmp(identifier, "faire") == 0) return TOKEN_FAIRE;
+    if (strcmp(identifier, "finfaire") == 0) return TOKEN_FINFAIRE;
     if (strcmp(identifier, "si") == 0) return TOKEN_SI;
     if (strcmp(identifier, "alors") == 0) return TOKEN_ALORS;
     if (strcmp(identifier, "sinon") == 0) return TOKEN_SINON;
     if (strcmp(identifier, "finsi") == 0) return TOKEN_FINSI;
     if (strcmp(identifier, "tantque") == 0) return TOKEN_TANTQUE;
-    if (strcmp(identifier, "faire") == 0) return TOKEN_FAIRE;
-    if (strcmp(identifier, "finfaire") == 0) return TOKEN_FINFAIRE;
     if (strcmp(identifier, "pour") == 0) return TOKEN_POUR;
     if (strcmp(identifier, "haut") == 0) return TOKEN_HAUT;
     if (strcmp(identifier, "bas") == 0) return TOKEN_BAS;
-    if (strcmp(identifier, "repeter") == 0) return TOKEN_REPETER;
-    if (strcmp(identifier, "jusqua") == 0) return TOKEN_JUSQUA;
+    if (strcmp(identifier, "et") == 0) return TOKEN_ET;
+    if (strcmp(identifier, "ou") == 0) return TOKEN_OU;
+    if (strcmp(identifier, "non") == 0) return TOKEN_NON;
+    if (strcmp(identifier, "div") == 0) return TOKEN_DIV;
+    if (strcmp(identifier, "mod") == 0) return TOKEN_MOD;
+    if (strcmp(identifier, "retourner") == 0) return TOKEN_RETOURNER;
+    if (strcmp(identifier, "structure") == 0) return TOKEN_STRUCTURE;
+    if (strcmp(identifier, "type") == 0) return TOKEN_TYPE;
+    if (strcmp(identifier, "vide") == 0) return TOKEN_VIDE;
+    if (strcmp(identifier, "chaine") == 0) return TOKEN_CHAINE;
+    if (strcmp(identifier, "caractere") == 0) return TOKEN_CARACTERE;
     if (strcmp(identifier, "entier") == 0) return TOKEN_ENTIER;
     if (strcmp(identifier, "reel") == 0) return TOKEN_REEL;
-    if (strcmp(identifier, "caractere") == 0) return TOKEN_CARACTERE;
     if (strcmp(identifier, "booleen") == 0) return TOKEN_BOOLEEN;
-    if (strcmp(identifier, "vide") == 0) return TOKEN_VIDE;
-    if (strcmp(identifier, "ecrire") == 0) return TOKEN_ECRIRE;
-    if (strcmp(identifier, "lire") == 0) return TOKEN_LIRE;
-    if (strcmp(identifier, "retourner") == 0) return TOKEN_RETOURNER;
-    if (strcmp(identifier, "debfonc") == 0) return TOKEN_DEBFONC;
-    if (strcmp(identifier, "finfonc") == 0) return TOKEN_FINFONC;
+    if (strcmp(identifier, "vrai") == 0) return TOKEN_VRAI;
+    if (strcmp(identifier, "faux") == 0) return TOKEN_FAUX;
+    if (strcmp(identifier, "nil") == 0) return TOKEN_NIL;
+    if (strcmp(identifier, "d") == 0) return TOKEN_D;
+    if (strcmp(identifier, "r") == 0) return TOKEN_R;
+    if (strcmp(identifier, "dr") == 0) return TOKEN_DR;
 
     return TOKEN_IDENTIFIER;
 }
@@ -247,9 +279,9 @@ Token* get_the_next_token(Lexer* lexer) {
         switch (lexer->current_char) {
             case '+' : token->type = TOKEN_PLUS; break;
             case '-' : token->type = TOKEN_MINUS; break;
-            case '*' : token->type = TOKEN_MULTIPLY; break;
-            case 'div' : token->type = TOKEN_DIVIDE; break;
-            case 'mod' : token->type = TOKEN_MODULO; break;
+            case '*' : token->type = TOKEN_ASTERISK; break;
+            case 'div' : token->type = TOKEN_DIV; break;
+            case 'mod' : token->type = TOKEN_MOD; break;
             case '(' : token->type = TOKEN_LPAREN; break;
             case ')' : token->type = TOKEN_RPAREN; break;
             case ';' : token->type = TOKEN_SEMICOLON; break;
