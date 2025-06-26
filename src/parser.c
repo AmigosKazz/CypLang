@@ -55,3 +55,49 @@ void free_parser (Parser* parser) {
 
     free(parser);
 }
+
+AstNode* parse(Parser* parser) {
+    return parse_program(parser);
+}
+
+AstNode* parse_program (Parser* parser) {
+    AstProgram* program = (AstProgram*)create_program_node();
+
+    int capacity = 10;
+    program->declarations = malloc(sizeof(AstNode*) * capacity);
+    program->declaration_count = 0;
+
+    while (parser->current_token->type != TOKEN_EOF) {
+        AstNode* declaration = parse_declaration(parser);
+
+        if (declaration) {
+            if (program->declaration_count >= capacity) {
+                capacity *= 2;
+                program->declarations = realloc(program->declarations, sizeof(AstNode*) * capacity);
+            }
+            program->declarations[program->declaration_count] = declaration;
+        }
+    }
+
+    return (AstNode*)program;
+}
+
+AstNode* parse_declaration(Parser* parser) {
+    // Détecte le type de déclaration selon le token courant
+    if (parser->current_token->type == TOKEN_DEBFONC) {
+        return parse_function_declaration(parser);
+    }
+    else if (parser->current_token->type == TOKEN_ENTIER ||
+             parser->current_token->type == TOKEN_REEL ||
+             parser->current_token->type == TOKEN_CHAINE ||
+             parser->current_token->type == TOKEN_CHARACTER ||
+             parser->current_token->type == TOKEN_BOOLEEN) {
+        return parse_variable_declaration(parser);
+             }
+
+    fprintf(stderr, "Erreur de syntaxe ligne %d, colonne %d: déclaration attendue\n",
+            parser->current_token->line, parser->current_token->column);
+    advance(parser);
+
+    return NULL;
+}
