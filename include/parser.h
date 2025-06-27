@@ -7,7 +7,7 @@
 typedef struct {
     Lexer* lexer;
     Token* current_token;
-    Tokent* previous_token;
+    Token* previous_token;
 } Parser;
 
 // parser function
@@ -22,7 +22,6 @@ AstNode* parse(Parser* parser);
 AstNode* parse_program(Parser* parser);
 AstNode* parse_declaration(Parser* parser);
 AstNode* parse_function_declaration(Parser* parser);
-AstNode* parse_procedure_declaration(Parser* parser);
 AstNode* parse_variable_declaration(Parser* parser);
 AstNode* parse_statement(Parser* parser);
 AstNode* parse_block(Parser* parser);

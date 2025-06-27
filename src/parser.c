@@ -83,7 +83,6 @@ AstNode* parse_program (Parser* parser) {
 }
 
 AstNode* parse_declaration(Parser* parser) {
-    // Détecte le type de déclaration selon le token courant
     if (parser->current_token->type == TOKEN_DEBFONC) {
         return parse_function_declaration(parser);
     }
@@ -100,4 +99,53 @@ AstNode* parse_declaration(Parser* parser) {
     advance(parser);
 
     return NULL;
+}
+
+AstNode*  parse_expression(Parser* parser) {
+    return parse_equality(parser);
+}
+
+AstNode* parse_equality (Parser* parser) {
+    AstNode* left = parse_comparison(parser);
+
+    while (parser->current_token->type == TOKEN_EQUAL || parser->current_token->type == TOKEN_BANG_EQUAL) {
+        TokenType operator = parser->current_token->type;
+        advance(parser);
+        AstNode* right = parse_comparison(parser);
+        left = create_binary_expr_node(left, operator, right);
+    }
+
+    return left;
+}
+
+// (<, >, <=, >=)
+AstNode* parse_comparison(Parser* parser) {
+    AstNode* left = parse_term(parser);
+
+    while (parser->current_token->type == TOKEN_LESS ||
+           parser->current_token->type == TOKEN_GREATER ||
+           parser->current_token->type == TOKEN_LESS_EQUAL ||
+           parser->current_token->type == TOKEN_GREATER_EQUAL) {
+        TokenType operator = parser->current_token->type;
+        advance(parser);
+        AstNode* right = parse_term(parser);
+        left = create_binary_expr_node(left, operator, right);
+           }
+
+    return left;
+}
+
+AstNode* parse_term(Parser* parser) {
+    AstNode* left = parse_factor(parser);
+
+    while (parser->current_token->type == TOKEN_PLUS ||
+           parser->current_token->type == TOKEN_MINUS ||
+           parser->current_token->type == TOKEN_OU) {  // Opérateur logique 'ou'
+        TokenType operator = parser->current_token->type;
+        advance(parser);
+        AstNode* right = parse_factor(parser);
+        left = create_binary_expr_node(left, operator, right);
+           }
+
+    return left;
 }
