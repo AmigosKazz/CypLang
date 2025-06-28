@@ -13,10 +13,24 @@ char* read_file(const char* file_path) {
         return NULL;
     }
 
-    fseek(file, 0, SEEK_END);
-    long file_size = ftell(file);
-    fseek(file, 0, SEEK_SET);
+    if (fseek(file, 0, SEEK_END) != 0) {
+        fprintf(stderr, "Erreur: Impossible de se déplacer à la fin du fichier '%s'\n", file_path);
+        fclose(file);
+        return NULL;
+    }
 
+    long file_size = ftell(file);
+    if (file_size == -1L) {
+        fprintf(stderr, "Erreur: Impossible d'obtenir la taille du fichier '%s'\n", file_path);
+        fclose(file);
+        return NULL;
+    }
+
+    if (fseek(file, 0, SEEK_SET) != 0) {
+        fprintf(stderr, "Erreur: Impossible de se déplacer au début du fichier '%s'\n", file_path);
+        fclose(file);
+        return NULL;
+    }
     char* buffer = malloc(file_size + 1);
     if (!buffer) {
         fprintf(stderr, "Erreur: Impossible d'allouer de la mémoire pour le contenu du fichier\n");
