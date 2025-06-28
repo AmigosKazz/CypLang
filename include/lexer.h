@@ -91,5 +91,6 @@ Token* parse_number(Lexer* lexer);
 Token* parse_string(Lexer* lexer);
 Token* parse_char(Lexer* lexer);
 Token* get_the_next_token(Lexer* lexer);
+void free_lexer(Lexer* lexer);
 
 #endif //LEXER_H

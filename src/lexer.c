@@ -338,3 +338,9 @@ Token* get_the_next_token(Lexer* lexer) {
 
     return token;
 }
+
+void free_lexer(Lexer* lexer) {
+    if (lexer != NULL) {
+        free(lexer);
+    }
+}
