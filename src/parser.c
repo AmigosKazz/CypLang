@@ -241,3 +241,118 @@ AstNode* parse_primary(Parser* parser) {
 
     return NULL;
 }
+
+AstNode* parse_function_call(Parser* parser, char* name) {
+    if (!expect(parser, TOKEN_LPAREN, "( attendu")) {
+        free(name);
+        return NULL;
+    }
+
+    AstNode** arguments = NULL;
+    int argument_count = 0;
+    int capacity = 4;
+
+    if (parser->current_token->type != TOKEN_RPAREN) {
+        arguments = malloc(capacity * sizeof(AstNode*));
+
+        do {
+            AstNode* arg = parse_expression(parser);
+            if (!arg) {
+                for (int i = 0; i < argument_count; i++) {
+                    free_ast_node(arguments[i]);
+                }
+                free(arguments);
+                free(name);
+                return NULL;
+            }
+
+            if (argument_count >= capacity) {
+                capacity *= 2;
+                arguments = realloc(arguments, capacity * sizeof(AstNode*));
+            }
+            arguments[argument_count++] = arg;
+
+        } while (match(parser, (TokenType)TOKEN_COMMA));
+    }
+
+    if (!expect(parser, TOKEN_RPAREN, ") attendu")) {
+        for (int i = 0; i < argument_count; i++) {
+            free_ast_node(arguments[i]);
+        }
+        free(arguments);
+        free(name);
+        return NULL;
+    }
+
+    AstNode* result = create_function_call_node(name, arguments, argument_count);
+    free(name);
+    return result;
+}
+
+AstNode* parse_if_statement(Parser* parser) {
+    advance(parser);
+    AstNode* condition = parse_expression(parser);
+    if (!condition) {
+        return NULL;
+    }
+
+    if (!expect(parser, TOKEN_ALORS, "alors attendu")) {
+        free_ast_node(condition);
+        return NULL;
+    }
+
+    AstNode* then_branch = parse_block(parser);
+    if (!then_branch) {
+        free_ast_node(condition);
+        return NULL;
+    }
+
+    AstNode* else_branch = NULL;
+    if (parser->current_token->type == TOKEN_SINON) {
+        advance(parser);
+        else_branch = parse_block(parser);
+        if (!else_branch) {
+            free_ast_node(condition);
+            free_ast_node(then_branch);
+            return NULL;
+        }
+    }
+
+    if (!expect(parser, TOKEN_FINSI, "finsi attendu")) {
+        free_ast_node(condition);
+        free_ast_node(then_branch);
+        if (else_branch) free_ast_node(else_branch);
+        return NULL;
+    }
+
+    return create_if_stmt_node(condition, then_branch, else_branch);
+
+}
+
+AstNode* parse_while_statement(Parser* parser) {
+    advance(parser);
+
+    AstNode* condition = parse_expression(parser);
+    if (!condition) {
+        return NULL;
+    }
+
+    if (!expect(parser, TOKEN_FAIRE, "faire attendu")) {
+        free_ast_node(condition);
+        return NULL;
+    }
+
+    AstNode* body = parse_block(parser);
+    if (!body) {
+        free_ast_node(condition);
+        return NULL;
+    }
+
+    if (!expect(parser, TOKEN_FINFAIRE, "finfaire attendu")) {
+        free_ast_node(condition);
+        free_ast_node(body);
+        return NULL;
+    }
+
+    return create_while_stmt_node(condition, body);
+}
