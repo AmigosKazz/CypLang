@@ -140,12 +140,103 @@ AstNode* parse_term(Parser* parser) {
 
     while (parser->current_token->type == TOKEN_PLUS ||
            parser->current_token->type == TOKEN_MINUS ||
-           parser->current_token->type == TOKEN_OU) {  // Opérateur logique 'ou'
+           parser->current_token->type == TOKEN_OU) {
         TokenType operator = parser->current_token->type;
         advance(parser);
         AstNode* right = parse_factor(parser);
         left = create_binary_expr_node(left, operator, right);
-           }
+    }
 
     return left;
+}
+
+AstNode* parse_factor(Parser* parser) {
+    AstNode* left = parse_unary(parser);
+
+    while (parser->current_token->type == TOKEN_ASTERISK ||
+        parser->current_token->type == TOKEN_SLASH ||
+        parser->current_token->type == TOKEN_MOD ||
+        parser->current_token->type == TOKEN_DIV ||
+        parser->current_token->type == TOKEN_ET) {
+        const TokenType operator = parser->current_token->type;
+        advance(parser);
+        AstNode* right = parse_unary(parser);
+        left = create_binary_expr_node(left, operator, right);
+    }
+
+    return left;
+}
+
+AstNode* parse_unary(Parser* parser) {
+    if (parser->current_token->type == TOKEN_MINUS ||
+        parser->current_token->type == TOKEN_NON) {
+        TokenType operator = parser->current_token->type;
+        advance(parser);
+        AstNode* operand = parse_unary(parser);
+        return create_unary_expr_node(operator, operand);
+    }
+
+    return parse_primary(parser);
+}
+
+AstNode* parse_primary(Parser* parser) {
+    const TokenType token_type = parser->current_token->type;
+
+    if (token_type == TOKEN_NUMBER) {
+        const int value = atoi(parser->current_token->value);
+        advance(parser);
+        return create_literal_node_int(value);
+    }
+
+    if (token_type == TOKEN_STRING) {
+        char* value = strdup(parser->current_token->value);
+        advance(parser);
+        return create_literal_node_string(value);
+    }
+
+    if (token_type == TOKEN_CHARACTER) {
+        const char value = parser->current_token->value[0];
+        advance(parser);
+        return create_literal_node_char(value);
+    }
+
+    if (token_type == TOKEN_VRAI || token_type == TOKEN_FAUX) {
+        const int value = (token_type == TOKEN_VRAI) ? 1 : 0;
+        advance(parser);
+        return create_literal_node_bool(value);
+    }
+
+    if (token_type == TOKEN_NIL) {
+        advance(parser);
+        return create_literal_node_int(0); // nil like 0
+    }
+
+    if (token_type == TOKEN_IDENTIFIER) {
+        char* name = strdup(parser->current_token->value);
+        advance(parser);
+
+        if (parser->current_token->type == TOKEN_LPAREN) {
+            return parse_function_call(parser, name);
+        }
+
+        AstNode* var_node = create_variable_node(name);
+        free(name);
+        return var_node;
+    }
+
+    if (token_type == TOKEN_LPAREN) {
+        advance(parser);
+        AstNode* expr = parse_expression(parser);
+
+        if (!expect(parser, TOKEN_RPAREN, ") attendu")) {
+            free_ast_node(expr);
+            return NULL;
+        }
+
+        return expr;
+    }
+
+    fprintf(stderr, "Syntax error in line %d, column %d: %s\n", parser->current_token->line, parser->current_token->column, parser->current_token->value);
+
+    return NULL;
 }
