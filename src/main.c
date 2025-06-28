@@ -25,6 +25,12 @@ char* read_file(const char* file_path) {
     }
 
     size_t bytes_read = fread(buffer, 1, file_size, file);
+    if (bytes_read != file_size) {
+        fprintf(stderr, "Erreur: Lecture incomplète du fichier '%s'. Bytes lus: %zu, attendu: %ld\n", file_path, bytes_read, file_size);
+        free(buffer);
+        fclose(file);
+        return NULL;
+    }
     buffer[bytes_read] = '\0';
 
     fclose(file);
