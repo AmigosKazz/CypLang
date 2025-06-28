@@ -25,8 +25,8 @@ void advance (Parser* parser) {
     parser->current_token = get_the_next_token(parser->lexer);
 }
 
-int match (Parser* parser, Token* type) {
-    if (parser->current_token == type) {
+int match (Parser* parser, TokenType type) {
+    if (parser->current_token->type == type) {
         advance(parser);
         return 1;
     }
@@ -76,6 +76,7 @@ AstNode* parse_program (Parser* parser) {
                 program->declarations = realloc(program->declarations, sizeof(AstNode*) * capacity);
             }
             program->declarations[program->declaration_count] = declaration;
+            program->declaration_count++;
         }
     }
 
