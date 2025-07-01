@@ -1,8 +1,7 @@
 # CypLang 🦉
 
 ![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
-![Version](https://img.shields.io/badge/version-0.1.0-blue)
-![License](https://img.shields.io/badge/license-MIT-lightgrey)
+![Version](https://img.shields.io/badge/version-0.0.1-blue)
 
 Interpreter and (coming soon) compiler for the CypLang programming language. This project is developed in C as part of an algorithms and compilation course.
 
@@ -52,4 +51,4 @@ cyplang/
 
 ## 📜 License
 
-This project is under MIT License. See the LICENSE file for more details.
+No explicit license. Use freely for learning and enjoyment!
