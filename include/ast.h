@@ -60,14 +60,14 @@ typedef struct {
 typedef struct {
     AstNode base;
     char* name;
-    struct AstNode** type;
+    struct AstNode* type;
     struct AstNode* initializer;
 } AstVariableDeclaration;
 
 typedef struct {
     AstNode base;
     char* name;
-    struct AstNode** type;
+    struct AstNode* type;
     int param_type;
 } AstParameter;
 
@@ -167,5 +167,6 @@ AstNode* create_array_access_node(AstNode* array, AstNode* index);
 AstNode* create_struct_access_node(AstNode* structure, char* field_name);
 
 void free_ast_node(AstNode* node);
+void print_ast(AstNode* node, int depth);
 
 #endif //AST_H
