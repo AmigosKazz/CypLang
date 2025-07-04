@@ -13,7 +13,6 @@ Lexer* init_lexer(char* source) {
     return lexer;
 }
 
-// move to the next character in the source code
 void advance(Lexer* lexer) {
     if (lexer->current_char == '\n') {
         lexer->line++;
@@ -26,7 +25,7 @@ void advance(Lexer* lexer) {
     if (lexer->source[lexer->position] != '\0') {
         lexer->current_char = lexer->source[lexer->position];
     } else {
-        lexer->current_char = '\0'; // end of file
+        lexer->current_char = '\0';
     }
 }
 
@@ -73,7 +72,6 @@ TokenType check_keyword(const char* identifier) {
     return TOKEN_IDENTIFIER;
 }
 
-// parse an identifier
 Token* parse_identifier(Lexer* lexer) {
     int start_col = lexer->column;
     int start_pos = lexer->position;
@@ -100,13 +98,27 @@ Token* parse_identifier(Lexer* lexer) {
     return token;
 }
 
-// parse a number
 Token* parse_number(Lexer* lexer) {
     int start_col = lexer->column;
     int start_pos = lexer->position;
+    int is_float = 0;
 
     while (lexer->current_char != '\0' && isdigit(lexer->current_char)) {
         advance(lexer);
+    }
+
+    if (lexer->current_char == '.') {
+        is_float = 1;
+        advance(lexer);
+
+        if (!isdigit(lexer->current_char)) {
+            fprintf(stderr, "Erreur: Nombre mal formaté à la ligne %d, colonne %d\n",
+                    lexer->line, lexer->column);
+        }
+
+        while (lexer->current_char != '\0' && isdigit(lexer->current_char)) {
+            advance(lexer);
+        }
     }
 
     int length = lexer->position - start_pos;
@@ -123,11 +135,10 @@ Token* parse_number(Lexer* lexer) {
     return token;
 }
 
-// parse a string
 Token* parse_string(Lexer* lexer) {
     int start_col = lexer->column;
-    int start_pos = lexer->position + 1; // skip the opening quote
-    advance(lexer); // move past the opening quote
+    int start_pos = lexer->position + 1;
+    advance(lexer);
 
     while (lexer->current_char != '\0' && lexer->current_char != '"') {
         advance(lexer);
@@ -143,7 +154,7 @@ Token* parse_string(Lexer* lexer) {
     strncpy(str, lexer->source + start_pos, length);
     str[length] = '\0';
 
-    advance(lexer); // move past the closing quote
+    advance(lexer);
 
     Token* token = (Token*)malloc(sizeof(Token));
     token->type = TOKEN_STRING;
@@ -187,6 +198,20 @@ Token* get_the_next_token(Lexer* lexer) {
             continue;
         }
 
+        if (lexer->current_char == '/' && lexer->source[lexer->position + 1] == '/') {
+            advance(lexer);
+            advance(lexer);
+
+            while (lexer->current_char != '\0' && lexer->current_char != '\n') {
+                advance(lexer);
+            }
+
+            if (lexer->current_char == '\n') {
+                advance(lexer);
+            }
+            continue;
+        }
+
         if (isalpha(lexer->current_char) || lexer->current_char == '_') {
             return parse_identifier(lexer);
         }
@@ -203,7 +228,6 @@ Token* get_the_next_token(Lexer* lexer) {
             return parse_character(lexer);
         }
 
-        // two charcter operators and special tokens
         int start_col = lexer->column;
 
         if (lexer->current_char == '<') {
@@ -297,7 +321,6 @@ Token* get_the_next_token(Lexer* lexer) {
             }
         }
 
-        // OTHER SINGLE CHARACTER TOKENS
         Token* token = (Token*)malloc(sizeof(Token));
         token->line = lexer->line;
         token->column = lexer->column;
@@ -325,11 +348,10 @@ Token* get_the_next_token(Lexer* lexer) {
                 advance(lexer);
                 continue;
         }
-        advance(lexer); // move to the next character
+        advance(lexer);
         return token;
     }
 
-    // End of file
     Token* token = (Token*)malloc(sizeof(Token));
     token->type = TOKEN_EOF;
     token->value = NULL;
