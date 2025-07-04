@@ -454,7 +454,65 @@ void free_ast_node(AstNode* node) {
             free(var->name);
             break;
         }
-        // Add more cases for other node types as needed
+        case AST_PARAMETER: {
+            AstParameter* param = (AstParameter*)node;
+            free(param->name);
+            break;
+        }
+        case AST_IF_STATEMENT: {
+            AstBlock* if_stmt = (AstBlock*)node;
+            for (int i = 0; i < if_stmt->statement_count; i++) {
+                if (if_stmt->statements[i]) {
+                    free_ast_node(if_stmt->statements[i]);
+                }
+            }
+            free(if_stmt->statements);
+            break;
+        }
+        case AST_WHILE_STATEMENT: {
+            AstWhileStatement* while_stmt = (AstWhileStatement*)node;
+            free_ast_node(while_stmt->condition);
+            free_ast_node(while_stmt->body);
+            break;
+        }
+        case AST_FOR_STATEMENT: {
+            AstForStatement* for_stmt = (AstForStatement*)node;
+            free_ast_node(for_stmt->init);
+            free_ast_node(for_stmt->condition);
+            if (for_stmt->update) {
+                free_ast_node(for_stmt->update);
+            }
+            free_ast_node(for_stmt->body);
+            break;
+        }
+        case AST_RETURN_STATEMENT: {
+            AstReturnStatement* ret = (AstReturnStatement*)node;
+            free_ast_node(ret->value);
+            break;
+        }
+        case AST_FUNCTION_CALL: {
+            AstFunctionCall* call = (AstFunctionCall*)node;
+            free(call->name);
+            break;
+        }
+        case AST_ASSIGNMENT: {
+            AstAssignment* assign = (AstAssignment*)node;
+            free_ast_node(assign->target);
+            free_ast_node(assign->value);
+            break;
+        }
+        case AST_ARRAY_ACCESS: {
+            AstArrayAccess* access = (AstArrayAccess*)node;
+            free_ast_node(access->array);
+            free_ast_node(access->index);
+            break;
+        }
+        case AST_STRUCT_ACCESS: {
+            AstStructAccess* access = (AstStructAccess*)node;
+            free_ast_node(access->structure);
+            free(access->field_name);
+            break;
+        }
     }
 
     free(node);
