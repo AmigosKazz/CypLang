@@ -89,6 +89,10 @@ int main(int argc, char *argv[]) {
 
     printf("Analyse syntaxique terminée avec succès !\n");
 
+    printf("\n==== STRUCTURE DE L'AST ====\n");
+    print_ast(ast, 0);
+    printf("===========================\n\n");
+
     free_ast_node(ast);
     free_parser(parser);
     free_lexer(lexer);

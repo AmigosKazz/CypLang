@@ -12,4 +12,5 @@ add_executable(CypLang src/main.c
         include/common.h
         src/lexer.c
         src/parser.c
-        src/interpreter.c)
+        src/interpreter.c
+        src/ast.c)
