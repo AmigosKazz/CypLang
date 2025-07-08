@@ -384,9 +384,7 @@ AstNode* parse_variable_declaration(Parser* parser) {
         return NULL;
     }
 
-    AstNode* type = NULL;
-
-    return create_variable_decl_node(name, type, initializer);
+    return create_variable_decl_node(name, NULL, initializer);
 }
 
 AstNode* parse_function_declaration(Parser* parser) {
