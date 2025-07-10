@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../include/ast.h"
-#include "../include/parser.h"
+#include "ast.h"
+#include "../parser/parser.h"
 
 void print_ast(AstNode* node, int depth) {
     if (!node) return;

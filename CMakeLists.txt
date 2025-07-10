@@ -4,13 +4,11 @@ project(CypLang C)
 set(CMAKE_C_STANDARD 11)
 
 add_executable(CypLang src/main.c
-        include/token.h
-        include/ast.h
-        include/lexer.h
-        include/parser.h
-        include/interpreter.h
-        include/common.h
-        src/lexer.c
-        src/parser.c
-        src/interpreter.c
-        src/ast.c)
+        src/token/token.h
+        src/ast/ast.h
+        src/lexer/lexer.h
+        src/parser/parser.h
+        src/lexer/lexer.c
+        src/parser/parser.c
+        src/ast/ast.c)
+
