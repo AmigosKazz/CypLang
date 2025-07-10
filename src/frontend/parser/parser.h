@@ -1,8 +1,8 @@
 #ifndef PARSER_H
 #define PARSER_H
 
-#include "lexer.h"
-#include "ast.h"
+#include "../lexer/lexer.h"
+#include "../ast/ast.h"
 
 typedef struct {
     Lexer* lexer;

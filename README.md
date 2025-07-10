@@ -1,9 +1,8 @@
 # CypLang 🦉
-
-![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
+![License](https://img.shields.io/badge/license-MIT-green)
 ![Version](https://img.shields.io/badge/version-0.0.1-blue)
 
-Interpreter and (coming soon) compiler for the CypLang programming language. This project is developed in C as part of an algorithms and compilation course.
+Interpreter and compiler for the CypLang programming language. This project is developed in C as part of an algorithms and compilation course.
 
 ## 🚀 Quick Start
 
@@ -11,6 +10,7 @@ Interpreter and (coming soon) compiler for the CypLang programming language. Thi
 
 - A C compiler (like `gcc` or `clang`)
 - `CMake` (version 3.10 or higher)
+- `LLVM` development libraries
 - `Git`
 
 ### Compilation
@@ -30,7 +30,7 @@ Interpreter and (coming soon) compiler for the CypLang programming language. Thi
    ```
    The `cyplang` executable will be created in the `build` folder.
 
-### Using the Interpreter
+### Run the interpreter
 
 To execute a `.cyp` file, run the executable with the file path:
 
@@ -38,17 +38,34 @@ To execute a `.cyp` file, run the executable with the file path:
 ./cyplang ../examples/hello.cyp
 ```
 
+### Compile to LLVM IR
+```bash
+./cyplang compile ../examples/hello.cyp -o hello.ll
+```
+
+### Compile to executable
+```bash
+./cyplang compile ../examples/hello.cyp -o hello
+```
+
 ## Project Structure
 ```
 cyplang/
-├── src/            # Source files (.c)
-├── include/        # Header files (.h)
-├── examples/       # CypLang code examples
-├── build/          # Compilation folder (created locally)
-└── CMakeLists.txt  # Configuration script for CMake
+├── examples/                 # CypLang code examples
+├── src/                      # Source files (.c)
+│   ├── frontend/             # Front-end components
+│   │   ├── lexer.c           # Tokenizer
+│   │   ├── parser.c          # Parser (AST builder)
+│   │   └── ast.c             # Abstract Syntax Tree
+│   ├── middle/               # Middle-end components
+│   │   └── ir_generator.c    # IR Generation (in progress)
+│   ├── backend/              # Back-end components
+│   │   └── llvm_emitter.c    # LLVM IR emission (planned)
+│   └── main.c                # Program entry point
+├── build/                    # Compilation folder (created locally)
+└── CMakeLists.txt            # Configuration script for CMake
 ```
 
 
 ## 📜 License
-
-No explicit license. Use freely for learning and enjoyment!
+This project is licensed under the MIT License - see the LICENSE file for details.

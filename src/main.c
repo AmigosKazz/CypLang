@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../include/parser.h"
-#include "../include/ast.h"
-#include "../include/lexer.h"
+#include "parser/parser.h"
+#include "ast/ast.h"
+#include "lexer/lexer.h"
 
 char* read_file(const char* file_path) {
     FILE* file = fopen(file_path, "r");

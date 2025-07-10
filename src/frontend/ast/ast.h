@@ -1,10 +1,10 @@
 #ifndef AST_H
 #define AST_H
 
-#include "token.h"
+#include "../token/token.h"
 #include <stdlib.h>
 
-#include "lexer.h"
+#include "../lexer/lexer.h"
 
 typedef enum {
     AST_PROGRAM,
