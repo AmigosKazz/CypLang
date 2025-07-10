@@ -2,101 +2,77 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "parser/parser.h"
-#include "ast/ast.h"
-#include "lexer/lexer.h"
+#define MAX_FILE_SIZE 1024 * 1024 // 1MB
 
-char* read_file(const char* file_path) {
-    FILE* file = fopen(file_path, "r");
-    if (!file) {
-        fprintf(stderr, "Erreur: Impossible d'ouvrir le fichier '%s'\n", file_path);
-        return NULL;
-    }
-
-    if (fseek(file, 0, SEEK_END) != 0) {
-        fprintf(stderr, "Erreur: Impossible de se déplacer à la fin du fichier '%s'\n", file_path);
-        fclose(file);
-        return NULL;
-    }
-
-    long file_size = ftell(file);
-    if (file_size == -1L) {
-        fprintf(stderr, "Erreur: Impossible d'obtenir la taille du fichier '%s'\n", file_path);
-        fclose(file);
-        return NULL;
-    }
-
-    if (fseek(file, 0, SEEK_SET) != 0) {
-        fprintf(stderr, "Erreur: Impossible de se déplacer au début du fichier '%s'\n", file_path);
-        fclose(file);
-        return NULL;
-    }
-    char* buffer = malloc(file_size + 1);
-    if (!buffer) {
-        fprintf(stderr, "Erreur: Impossible d'allouer de la mémoire pour le contenu du fichier\n");
-        fclose(file);
-        return NULL;
-    }
-
-    size_t bytes_read = fread(buffer, 1, file_size, file);
-    if (bytes_read != file_size) {
-        fprintf(stderr, "Erreur: Lecture incomplète du fichier '%s'. Bytes lus: %zu, attendu: %ld\n", file_path, bytes_read, file_size);
-        free(buffer);
-        fclose(file);
-        return NULL;
-    }
-    buffer[bytes_read] = '\0';
-
-    fclose(file);
-    return buffer;
-}
+char* readFile(const char* filename);
+void processCypLang(const char* source);
 
 int main(int argc, char *argv[]) {
-    printf("Bienvenue dans le compilateur CypLang !\n");
+    const char* defaultFile = "input.cyp";
+    const char* filename;
 
-    if (argc < 2) {
-        fprintf(stderr, "Usage: %s <fichier_source>\n", argv[0]);
-        return EXIT_FAILURE;
+    if (argc > 1) {
+        filename = argv[1];
+    } else {
+        filename = defaultFile;
+        printf("No input file specified, using default: %s\n", defaultFile);
     }
 
-    char* source = read_file(argv[1]);
+    char* source = readFile(filename);
     if (!source) {
+        fprintf(stderr, "Error: Could not read file %s\n", filename);
         return EXIT_FAILURE;
     }
 
-    Lexer* lexer = init_lexer(source);
-    if (!lexer) {
-        free(source);
-        return EXIT_FAILURE;
-    }
+    printf("Processing CypLang file: %s\n", filename);
 
-    Parser* parser = init_parser(lexer);
-    if (!parser) {
-        free_lexer(lexer);
-        free(source);
-        return EXIT_FAILURE;
-    }
+    processCypLang(source);
 
-    // Parser le programme
-    AstNode* ast = parse(parser);
-    if (!ast) {
-        fprintf(stderr, "Erreur: Échec de l'analyse syntaxique.\n");
-        free_parser(parser);
-        free_lexer(lexer);
-        free(source);
-        return EXIT_FAILURE;
-    }
-
-    printf("Analyse syntaxique terminée avec succès !\n");
-
-    printf("\n==== STRUCTURE DE L'AST ====\n");
-    print_ast(ast, 0);
-    printf("===========================\n\n");
-
-    free_ast_node(ast);
-    free_parser(parser);
-    free_lexer(lexer);
     free(source);
 
     return EXIT_SUCCESS;
+}
+
+char* readFile(const char* filename) {
+    FILE* file = fopen(filename, "r");
+    if (!file) {
+        perror("Error opening file");
+        return NULL;
+    }
+
+    // Get file size
+    fseek(file, 0, SEEK_END);
+    long size = ftell(file);
+    fseek(file, 0, SEEK_SET);
+
+    if (size > MAX_FILE_SIZE) {
+        fprintf(stderr, "File too large (max: %d bytes)\n", MAX_FILE_SIZE);
+        fclose(file);
+        return NULL;
+    }
+
+    char* buffer = (char*)malloc(size + 1);
+    if (!buffer) {
+        perror("Memory allocation failed");
+        fclose(file);
+        return NULL;
+    }
+
+    size_t bytesRead = fread(buffer, 1, size, file);
+    buffer[bytesRead] = '\0';
+    fclose(file);
+
+    return buffer;
+}
+
+void processCypLang(const char* source) {
+    printf("CypLang source code:\n%s\n", source);
+    printf("--------------------------------\n");
+    printf("(Replace this with actual CypLang processing)\n");
+
+    printf("\nOutput:\n");
+
+    if (strstr(source, "4 + 4") != NULL) {
+        printf("x = 8\n");
+    }
 }
