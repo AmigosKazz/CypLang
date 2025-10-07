@@ -12,5 +12,6 @@ add_executable(CypLang src/main.c
         src/frontend/parser/parser.c
         src/frontend/ast/ast.c
         src/middle/ir_generator.c
-        src/backend/llvm_emitter.c)
+        src/backend/llvm_emitter.c
+        src/middle/ir_generator.h)
 

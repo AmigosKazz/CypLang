@@ -12,7 +12,7 @@ typedef struct {
 
 // parser function
 Parser* init_parser(Lexer* lexer);
-void advance(Parser* parser);
+void parser_advance(Parser* parser);
 int match(Parser* parser, TokenType type);
 int expect(Parser* parser, TokenType type, const char* error_message);
 void free_parser(Parser* parser);
