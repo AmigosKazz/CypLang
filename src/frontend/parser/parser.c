@@ -17,7 +17,7 @@ Parser* init_parser (Lexer* lexer) {
     return parser;
 }
 
-void advance (Parser* parser) {
+void parser_advance (Parser* parser) {
     if (parser->previous_token) {
         free(parser->previous_token);
     }
@@ -27,14 +27,14 @@ void advance (Parser* parser) {
 
 int match (Parser* parser, TokenType type) {
     if (parser->current_token->type == type) {
-        advance(parser);
+        parser_advance(parser);
         return 1;
     }
 
     return 0;
 }
 
-int expect(Parser* parser, Token* type, const char* error_message) {
+int expect(Parser* parser, TokenType type, const char* error_message) {
     if (match(parser, type)) {
         return 1;
     }
@@ -97,7 +97,7 @@ AstNode* parse_declaration(Parser* parser) {
 
     fprintf(stderr, "Erreur de syntaxe ligne %d, colonne %d: déclaration attendue\n",
             parser->current_token->line, parser->current_token->column);
-    advance(parser);
+    parser_advance(parser);
 
     return NULL;
 }
@@ -111,7 +111,7 @@ AstNode* parse_equality (Parser* parser) {
 
     while (parser->current_token->type == TOKEN_EQUAL || parser->current_token->type == TOKEN_BANG_EQUAL) {
         TokenType operator = parser->current_token->type;
-        advance(parser);
+        parser_advance(parser);
         AstNode* right = parse_comparison(parser);
         left = create_binary_expr_node(left, operator, right);
     }
@@ -128,7 +128,7 @@ AstNode* parse_comparison(Parser* parser) {
            parser->current_token->type == TOKEN_LESS_EQUAL ||
            parser->current_token->type == TOKEN_GREATER_EQUAL) {
         TokenType operator = parser->current_token->type;
-        advance(parser);
+        parser_advance(parser);
         AstNode* right = parse_term(parser);
         left = create_binary_expr_node(left, operator, right);
            }
@@ -143,7 +143,7 @@ AstNode* parse_term(Parser* parser) {
            parser->current_token->type == TOKEN_MINUS ||
            parser->current_token->type == TOKEN_OU) {
         TokenType operator = parser->current_token->type;
-        advance(parser);
+        parser_advance(parser);
         AstNode* right = parse_factor(parser);
         left = create_binary_expr_node(left, operator, right);
     }
@@ -160,7 +160,7 @@ AstNode* parse_factor(Parser* parser) {
         parser->current_token->type == TOKEN_DIV ||
         parser->current_token->type == TOKEN_ET) {
         const TokenType operator = parser->current_token->type;
-        advance(parser);
+        parser_advance(parser);
         AstNode* right = parse_unary(parser);
         left = create_binary_expr_node(left, operator, right);
     }
@@ -172,7 +172,7 @@ AstNode* parse_unary(Parser* parser) {
     if (parser->current_token->type == TOKEN_MINUS ||
         parser->current_token->type == TOKEN_NON) {
         TokenType operator = parser->current_token->type;
-        advance(parser);
+        parser_advance(parser);
         AstNode* operand = parse_unary(parser);
         return create_unary_expr_node(operator, operand);
     }
@@ -185,36 +185,36 @@ AstNode* parse_primary(Parser* parser) {
 
     if (token_type == TOKEN_NUMBER) {
         const int value = atoi(parser->current_token->value);
-        advance(parser);
+        parser_advance(parser);
         return create_literal_node_int(value);
     }
 
     if (token_type == TOKEN_STRING) {
         char* value = strdup(parser->current_token->value);
-        advance(parser);
+        parser_advance(parser);
         return create_literal_node_string(value);
     }
 
     if (token_type == TOKEN_CHARACTER) {
         const char value = parser->current_token->value[0];
-        advance(parser);
+        parser_advance(parser);
         return create_literal_node_char(value);
     }
 
     if (token_type == TOKEN_VRAI || token_type == TOKEN_FAUX) {
         const int value = (token_type == TOKEN_VRAI) ? 1 : 0;
-        advance(parser);
+        parser_advance(parser);
         return create_literal_node_bool(value);
     }
 
     if (token_type == TOKEN_NIL) {
-        advance(parser);
+        parser_advance(parser);
         return create_literal_node_int(0); // nil like 0
     }
 
     if (token_type == TOKEN_IDENTIFIER) {
         char* name = strdup(parser->current_token->value);
-        advance(parser);
+        parser_advance(parser);
 
         if (parser->current_token->type == TOKEN_LPAREN) {
             return parse_function_call(parser, name);
@@ -226,7 +226,7 @@ AstNode* parse_primary(Parser* parser) {
     }
 
     if (token_type == TOKEN_LPAREN) {
-        advance(parser);
+        parser_advance(parser);
         AstNode* expr = parse_expression(parser);
 
         if (!expect(parser, TOKEN_RPAREN, ") attendu")) {
@@ -290,7 +290,7 @@ AstNode* parse_function_call(Parser* parser, char* name) {
 }
 
 AstNode* parse_if_statement(Parser* parser) {
-    advance(parser);
+    parser_advance(parser);
     AstNode* condition = parse_expression(parser);
     if (!condition) {
         return NULL;
@@ -309,7 +309,7 @@ AstNode* parse_if_statement(Parser* parser) {
 
     AstNode* else_branch = NULL;
     if (parser->current_token->type == TOKEN_SINON) {
-        advance(parser);
+        parser_advance(parser);
         else_branch = parse_block(parser);
         if (!else_branch) {
             free_ast_node(condition);
@@ -330,7 +330,7 @@ AstNode* parse_if_statement(Parser* parser) {
 }
 
 AstNode* parse_while_statement(Parser* parser) {
-    advance(parser);
+    parser_advance(parser);
 
     AstNode* condition = parse_expression(parser);
     if (!condition) {
@@ -355,4 +355,134 @@ AstNode* parse_while_statement(Parser* parser) {
     }
 
     return create_while_stmt_node(condition, body);
+}
+
+AstNode* parse_function_declaration(Parser* parser) {
+    if (!match(parser, TOKEN_DEBFONC)) {
+        return NULL;
+    }
+
+    if (parser->current_token->type != TOKEN_IDENTIFIER) {
+        fprintf(stderr, "Nom de fonction attendu\n");
+        return NULL;
+    }
+
+    char* func_name = strdup(parser->current_token->value);
+    parser_advance(parser);
+
+    if (!expect(parser, TOKEN_LPAREN, "( attendu")) {
+        free(func_name);
+        return NULL;
+    }
+
+    // Paramètres - simplifiés pour l'instant
+    AstNode* params = NULL;
+
+    if (!expect(parser, TOKEN_RPAREN, ") attendu")) {
+        free(func_name);
+        return NULL;
+    }
+
+    // Type de retour optionnel
+    if (match(parser, TOKEN_DOT)) {  // Using DOT as colon placeholder
+        // Skip le type pour l'instant
+        parser_advance(parser);
+    }
+
+    AstNode* body = parse_block(parser);
+    if (!body) {
+        free(func_name);
+        return NULL;
+    }
+
+    if (!expect(parser, TOKEN_FINFONC, "FINFONC attendu")) {
+        free(func_name);
+        free_ast_node(body);
+        return NULL;
+    }
+
+    return create_function_decl_node(func_name, NULL, 0, NULL, body);
+}
+
+AstNode* parse_variable_declaration(Parser* parser) {
+    TokenType type_token = parser->current_token->type;
+    if (type_token != TOKEN_ENTIER && type_token != TOKEN_REEL &&
+        type_token != TOKEN_CHAINE && type_token != TOKEN_BOOLEEN) {
+        return NULL;
+    }
+
+    parser_advance(parser);
+
+    if (parser->current_token->type != TOKEN_IDENTIFIER) {
+        fprintf(stderr, "Nom de variable attendu\n");
+        return NULL;
+    }
+
+    char* var_name = strdup(parser->current_token->value);
+    parser_advance(parser);
+
+    AstNode* initializer = NULL;
+    if (match(parser, TOKEN_ASSIGN)) {
+        initializer = parse_expression(parser);
+        if (!initializer) {
+            free(var_name);
+            return NULL;
+        }
+    }
+
+    return create_variable_decl_node(var_name, NULL, initializer);
+}
+
+AstNode* parse_statement(Parser* parser) {
+    // Handle different statement types
+    if (match(parser, TOKEN_SI)) {
+        return parse_if_statement(parser);
+    }
+    if (match(parser, TOKEN_TANTQUE)) {
+        return parse_while_statement(parser);
+    }
+    if (match(parser, TOKEN_RETOURNER)) {
+        return parse_return_statement(parser);
+    }
+
+    // Try variable declaration
+    if (parser->current_token->type == TOKEN_ENTIER ||
+        parser->current_token->type == TOKEN_REEL ||
+        parser->current_token->type == TOKEN_CHAINE ||
+        parser->current_token->type == TOKEN_BOOLEEN) {
+        return parse_variable_declaration(parser);
+    }
+
+    // Otherwise it's an expression statement
+    return parse_expression(parser);
+}
+
+AstNode* parse_return_statement(Parser* parser) {
+    AstNode* value = NULL;
+    if (parser->current_token->type != TOKEN_EOF &&
+        parser->current_token->type != TOKEN_FINFONC) {
+        value = parse_expression(parser);
+    }
+    return create_return_stmt_node(value);
+}
+
+AstNode* parse_block(Parser* parser) {
+    AstNode* statements = create_block_node();
+
+    while (parser->current_token->type != TOKEN_EOF &&
+           parser->current_token->type != TOKEN_FINSI &&
+           parser->current_token->type != TOKEN_SINON &&
+           parser->current_token->type != TOKEN_FINFAIRE &&
+           parser->current_token->type != TOKEN_FINFONC) {
+
+        AstNode* stmt = parse_statement(parser);
+        if (stmt) {
+            // Add statement to block - pour l'instant on retourne simplement le statement
+            // TODO: implémenter la logique pour ajouter au block
+        } else {
+            break;
+        }
+    }
+
+    return statements;
 }

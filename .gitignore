@@ -12,3 +12,6 @@
 
 #idea
 .idea
+/build
+/cmake-build-debug
+
