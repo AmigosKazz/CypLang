@@ -64,17 +64,19 @@ void print_ast(AstNode* node, int depth) {
             printf("%s  Valeur:\n", indent);
             print_ast(((AstAssignment*)node)->value, depth + 2);
             break;
-        case AST_IF_STATEMENT:
+        case AST_IF_STATEMENT: {
+            AstIfStatement* if_stmt = (AstIfStatement*)node;
             printf("%sCondition Si\n", indent);
             printf("%s  Condition:\n", indent);
-            print_ast(((AstBlock*)node)->statements[0], depth + 2);
+            print_ast(if_stmt->condition, depth + 2);
             printf("%s  Alors:\n", indent);
-            print_ast(((AstBlock*)node)->statements[1], depth + 2);
-            if (((AstBlock*)node)->statements[2]) {
+            print_ast(if_stmt->then_branch, depth + 2);
+            if (if_stmt->else_branch) {
                 printf("%s  Sinon:\n", indent);
-                print_ast(((AstBlock*)node)->statements[2], depth + 2);
+                print_ast(if_stmt->else_branch, depth + 2);
             }
             break;
+        }
         case AST_WHILE_STATEMENT:
             printf("%sBoucle Tant Que\n", indent);
             printf("%s  Condition:\n", indent);
@@ -96,9 +98,15 @@ void print_ast(AstNode* node, int depth) {
             printf("%sRetour\n", indent);
             print_ast(((AstReturnStatement*)node)->value, depth + 1);
             break;
-        case AST_FUNCTION_CALL:
-            printf("%sAppel de fonction: %s\n", indent, ((AstFunctionCall*)node)->name);
+        case AST_FUNCTION_CALL: {
+            AstFunctionCall* call = (AstFunctionCall*)node;
+            printf("%sAppel de fonction: %s (%d arg)\n", indent, call->name, call->argument_count);
+            for (int i = 0; i < call->argument_count; i++) {
+                printf("%s  Argument %d:\n", indent, i + 1);
+                print_ast(call->arguments[i], depth + 2);
+            }
             break;
+        }
         case AST_VARIABLE:
             printf("%sVariable: %s\n", indent, ((AstVariable*)node)->name);
             break;
@@ -231,20 +239,15 @@ AstNode* create_assignment_node(AstNode* target, AstNode* value) {
 }
 
 AstNode* create_if_stmt_node(AstNode* condition, AstNode* then_branch, AstNode* else_branch) {
-    // We're using a dummy struct for if statements until we create a proper one
-    // This is a placeholder implementation
-    AstBlock* if_stmt = (AstBlock*)malloc(sizeof(AstBlock));
+    AstIfStatement* if_stmt = (AstIfStatement*)malloc(sizeof(AstIfStatement));
     if (!if_stmt) {
         fprintf(stderr, "Erreur d'allocation mémoire\n");
         exit(EXIT_FAILURE);
     }
     if_stmt->base.type = AST_IF_STATEMENT;
-    // For now, just add the condition and branches to the statements array
-    if_stmt->statements = malloc(3 * sizeof(AstNode*));
-    if_stmt->statements[0] = condition;
-    if_stmt->statements[1] = then_branch;
-    if_stmt->statements[2] = else_branch;
-    if_stmt->statement_count = 3;
+    if_stmt->condition = condition;
+    if_stmt->then_branch = then_branch;
+    if_stmt->else_branch = else_branch;
     return (AstNode*)if_stmt;
 }
 
@@ -287,7 +290,6 @@ AstNode* create_return_stmt_node(AstNode* value) {
 }
 
 AstNode* create_function_call_node(char* name, AstNode** arguments, int argument_count) {
-    // This is a placeholder implementation
     AstFunctionCall* call = (AstFunctionCall*)malloc(sizeof(AstFunctionCall));
     if (!call) {
         fprintf(stderr, "Erreur d'allocation mémoire\n");
@@ -295,7 +297,8 @@ AstNode* create_function_call_node(char* name, AstNode** arguments, int argument
     }
     call->base.type = AST_FUNCTION_CALL;
     call->name = strdup(name);
-    // Note: We're not storing the arguments here, this would need to be extended
+    call->arguments = arguments;
+    call->argument_count = argument_count;
     return (AstNode*)call;
 }
 
@@ -460,13 +463,10 @@ void free_ast_node(AstNode* node) {
             break;
         }
         case AST_IF_STATEMENT: {
-            AstBlock* if_stmt = (AstBlock*)node;
-            for (int i = 0; i < if_stmt->statement_count; i++) {
-                if (if_stmt->statements[i]) {
-                    free_ast_node(if_stmt->statements[i]);
-                }
-            }
-            free(if_stmt->statements);
+            AstIfStatement* if_stmt = (AstIfStatement*)node;
+            free_ast_node(if_stmt->condition);
+            free_ast_node(if_stmt->then_branch);
+            if (if_stmt->else_branch) free_ast_node(if_stmt->else_branch);
             break;
         }
         case AST_WHILE_STATEMENT: {
@@ -492,6 +492,10 @@ void free_ast_node(AstNode* node) {
         }
         case AST_FUNCTION_CALL: {
             AstFunctionCall* call = (AstFunctionCall*)node;
+            for (int i = 0; i < call->argument_count; i++) {
+                free_ast_node(call->arguments[i]);
+            }
+            free(call->arguments);
             free(call->name);
             break;
         }

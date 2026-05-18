@@ -18,8 +18,8 @@ FILE ?= input.cyp
 # The final executable
 TARGET = $(BIN_DIR)/cyplang
 
-# Source files
-SRCS = $(wildcard $(SRC_DIR)/*.c)
+# Source files (recursive: src/, src/frontend/**, src/middle/, src/backend/)
+SRCS = $(shell find $(SRC_DIR) -name '*.c')
 OBJS = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SRCS))
 
 # Create directories if they don't exist
@@ -34,8 +34,9 @@ $(TARGET): $(OBJS)
 	$(CC) $^ -o $@ $(LDFLAGS)
 	@echo "Build complete!"
 
-# Compiling source files
+# Compiling source files (mkdir handles nested obj subdirs)
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(dir $@)
 	@echo "Compiling $<..."
 	$(CC) $(CFLAGS) -c $< -o $@
 

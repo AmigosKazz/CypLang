@@ -2,12 +2,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAX_FILE_SIZE 1024 * 1024 // 1MB
+#include "frontend/lexer/lexer.h"
+#include "frontend/parser/parser.h"
+#include "frontend/ast/ast.h"
+#include "middle/ir_generator.h"
 
-char* readFile(const char* filename);
-void processCypLang(const char* source);
+#define MAX_FILE_SIZE (1024 * 1024) // 1MB
 
-int main(int argc, char *argv[]) {
+static char* readFile(const char* filename);
+
+int main(int argc, char* argv[]) {
     const char* defaultFile = "input.cyp";
     const char* filename;
 
@@ -24,23 +28,71 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    printf("Processing CypLang file: %s\n", filename);
+    printf("=== Source (%s) ===\n%s\n", filename, source);
 
-    processCypLang(source);
+    // 1. Lexer
+    Lexer* lexer = init_lexer(source);
+    if (!lexer) {
+        fprintf(stderr, "Failed to initialize lexer\n");
+        free(source);
+        return EXIT_FAILURE;
+    }
 
+    // 2. Parser → AST
+    Parser* parser = init_parser(lexer);
+    if (!parser) {
+        fprintf(stderr, "Failed to initialize parser\n");
+        free_lexer(lexer);
+        free(source);
+        return EXIT_FAILURE;
+    }
+
+    AstNode* ast = parse(parser);
+    if (!ast) {
+        fprintf(stderr, "Parsing failed\n");
+        free_parser(parser);
+        free_lexer(lexer);
+        free(source);
+        return EXIT_FAILURE;
+    }
+
+    printf("\n=== AST ===\n");
+    print_ast(ast, 0);
+
+    // 3. IR generation
+    IRProgram* ir = generate_ir(ast);
+    if (!ir) {
+        fprintf(stderr, "IR generation failed\n");
+        free_ast_node(ast);
+        free_parser(parser);
+        free_lexer(lexer);
+        free(source);
+        return EXIT_FAILURE;
+    }
+
+    printf("\n");
+    ir_print_program(ir);
+
+    // TODO(phase1.5): ir_free_program double-frees because IR temp strings
+    // (t0, t1...) are shared by pointer across instructions instead of
+    // strdup'd at each consumption site. Re-enable once IR owns its strings.
+    // ir_free_program(ir);
+    (void)ir;
+    free_ast_node(ast);
+    free_parser(parser);
+    free_lexer(lexer);
     free(source);
 
     return EXIT_SUCCESS;
 }
 
-char* readFile(const char* filename) {
+static char* readFile(const char* filename) {
     FILE* file = fopen(filename, "r");
     if (!file) {
         perror("Error opening file");
         return NULL;
     }
 
-    // Get file size
     fseek(file, 0, SEEK_END);
     long size = ftell(file);
     fseek(file, 0, SEEK_SET);
@@ -63,16 +115,4 @@ char* readFile(const char* filename) {
     fclose(file);
 
     return buffer;
-}
-
-void processCypLang(const char* source) {
-    printf("CypLang source code:\n%s\n", source);
-    printf("--------------------------------\n");
-    printf("(Replace this with actual CypLang processing)\n");
-
-    printf("\nOutput:\n");
-
-    if (strstr(source, "4 + 4") != NULL) {
-        printf("x = 8\n");
-    }
 }

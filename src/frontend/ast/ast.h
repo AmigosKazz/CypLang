@@ -94,6 +94,13 @@ typedef struct {
 typedef struct {
     AstNode base;
     struct AstNode* condition;
+    struct AstNode* then_branch;
+    struct AstNode* else_branch;
+} AstIfStatement;
+
+typedef struct {
+    AstNode base;
+    struct AstNode* condition;
     struct AstNode* body;
 } AstWhileStatement;
 
@@ -114,6 +121,8 @@ typedef struct {
 typedef struct {
     AstNode base;
     char* name;
+    struct AstNode** arguments;
+    int argument_count;
 } AstFunctionCall;
 
 typedef struct {
