@@ -222,27 +222,39 @@ char* generate_ir_from_assignment(IRProgram* program, AstAssignment* assign) {
     }
 }
 
-void generate_ir_from_if_statement(IRProgram* program, AstNode* node) {
-    char* condition = generate_ir_from_node(program, node, NULL);
+void generate_ir_from_if_statement(IRProgram* program, AstIfStatement* if_stmt) {
+    char* condition = generate_ir_from_node(program, if_stmt->condition, NULL);
 
     char* else_label = new_label(program);
     char* end_label = new_label(program);
 
+    // if !cond goto else_label
     IrInstruction* if_inst = create_instruction(IR_IF_GOTO);
     if_inst->arg1 = condition;
-    if_inst->label = else_label;
+    if_inst->label = strdup(else_label);
     emit_instruction(program, if_inst);
 
-    IrInstruction* else_label_inst = create_instruction(IR_LABEL);
-    else_label_inst->label = strdup(else_label);
-    emit_instruction(program, else_label_inst);
+    // then branch
+    generate_ir_from_node(program, if_stmt->then_branch, NULL);
 
+    // goto end
     IrInstruction* goto_end = create_instruction(IR_GOTO);
-    goto_end->label = end_label;
+    goto_end->label = strdup(end_label);
     emit_instruction(program, goto_end);
 
+    // else_label:
+    IrInstruction* else_label_inst = create_instruction(IR_LABEL);
+    else_label_inst->label = else_label;
+    emit_instruction(program, else_label_inst);
+
+    // else branch (optional)
+    if (if_stmt->else_branch) {
+        generate_ir_from_node(program, if_stmt->else_branch, NULL);
+    }
+
+    // end_label:
     IrInstruction* end_label_inst = create_instruction(IR_LABEL);
-    end_label_inst->label = strdup(end_label);
+    end_label_inst->label = end_label;
     emit_instruction(program, end_label_inst);
 }
 
@@ -435,7 +447,7 @@ char* generate_ir_from_node(IRProgram* program, AstNode* node, char* result_var)
         case AST_UNARY_EXPR:
             return generate_ir_from_unary_expr(program, (AstUnaryExpr*)node);
         case AST_IF_STATEMENT:
-            generate_ir_from_if_statement(program, node);
+            generate_ir_from_if_statement(program, (AstIfStatement*)node);
             return NULL;
         case AST_WHILE_STATEMENT:
             generate_ir_from_while_statement(program, (AstWhileStatement*)node);

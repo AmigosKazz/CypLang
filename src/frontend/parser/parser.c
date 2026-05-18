@@ -467,7 +467,9 @@ AstNode* parse_return_statement(Parser* parser) {
 }
 
 AstNode* parse_block(Parser* parser) {
-    AstNode* statements = create_block_node();
+    AstBlock* block = (AstBlock*)create_block_node();
+    int capacity = 8;
+    block->statements = malloc(capacity * sizeof(AstNode*));
 
     while (parser->current_token->type != TOKEN_EOF &&
            parser->current_token->type != TOKEN_FINSI &&
@@ -476,13 +478,14 @@ AstNode* parse_block(Parser* parser) {
            parser->current_token->type != TOKEN_FINFONC) {
 
         AstNode* stmt = parse_statement(parser);
-        if (stmt) {
-            // Add statement to block - pour l'instant on retourne simplement le statement
-            // TODO: implémenter la logique pour ajouter au block
-        } else {
-            break;
+        if (!stmt) break;
+
+        if (block->statement_count >= capacity) {
+            capacity *= 2;
+            block->statements = realloc(block->statements, capacity * sizeof(AstNode*));
         }
+        block->statements[block->statement_count++] = stmt;
     }
 
-    return statements;
+    return (AstNode*)block;
 }
