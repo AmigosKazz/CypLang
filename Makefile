@@ -54,4 +54,12 @@ clean:
 # Rebuild
 rebuild: clean all
 
-.PHONY: all run clean rebuild
+# Run integration tests (tests/cases/*.cyp)
+test: $(TARGET)
+	@./tests/run.sh
+
+# Regenerate test baselines (use with care — review the diff before committing)
+test-update: $(TARGET)
+	@UPDATE=1 ./tests/run.sh
+
+.PHONY: all run clean rebuild test test-update

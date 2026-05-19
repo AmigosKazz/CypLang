@@ -1,0 +1,1 @@
+afficher("Hello, World!")

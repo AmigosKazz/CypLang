@@ -1,0 +1,47 @@
+=== Source (01_arithmetic_priority.cyp) ===
+entier a <- 1 + 2 * 3
+entier b <- (1 + 2) * 3
+
+
+=== AST ===
+Programme avec 2 déclarations
+  Variable: a
+    Initializer:
+      Expression binaire (opérateur 10)
+        Gauche:
+          Littéral (nombre): 1
+        Droite:
+          Expression binaire (opérateur 11)
+            Gauche:
+              Littéral (nombre): 2
+            Droite:
+              Littéral (nombre): 3
+  Variable: b
+    Initializer:
+      Expression binaire (opérateur 11)
+        Gauche:
+          Expression binaire (opérateur 10)
+            Gauche:
+              Littéral (nombre): 1
+            Droite:
+              Littéral (nombre): 2
+        Droite:
+          Littéral (nombre): 3
+
+=== IR Program ===
+
+Global Instructions:
+    t0 = 1
+    t1 = 2
+    t2 = 3
+    t3 = t1 * t2
+    t4 = t0 + t3
+    a = t4
+    t5 = 1
+    t6 = 2
+    t7 = t5 + t6
+    t8 = 3
+    t9 = t7 * t8
+    b = t9
+
+=== End IR Program ===

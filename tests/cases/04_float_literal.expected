@@ -1,0 +1,29 @@
+=== Source (04_float_literal.cyp) ===
+reel pi <- 3.14
+reel e <- 2.71
+entier n <- 42
+
+
+=== AST ===
+Programme avec 3 déclarations
+  Variable: pi
+    Initializer:
+      Littéral (réel): 3.140000
+  Variable: e
+    Initializer:
+      Littéral (réel): 2.710000
+  Variable: n
+    Initializer:
+      Littéral (nombre): 42
+
+=== IR Program ===
+
+Global Instructions:
+    t0 = 3.140000
+    pi = t0
+    t1 = 2.710000
+    e = t1
+    t2 = 42
+    n = t2
+
+=== End IR Program ===

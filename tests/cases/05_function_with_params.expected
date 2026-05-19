@@ -1,0 +1,57 @@
+=== Source (05_function_with_params.cyp) ===
+debfonc somme(d entier a, d entier b)
+  retourner a + b
+finfonc
+debfonc double(d entier x)
+  retourner x * 2
+finfonc
+
+
+=== AST ===
+Programme avec 2 déclarations
+  Fonction: somme avec 2 paramètres
+    Paramètre 1:
+      Paramètre: a
+    Paramètre 2:
+      Paramètre: b
+    Corps de la fonction:
+      Bloc avec 1 instructions
+        Retour
+          Expression binaire (opérateur 10)
+            Gauche:
+              Variable: a
+            Droite:
+              Variable: b
+  Fonction: double avec 1 paramètres
+    Paramètre 1:
+      Paramètre: x
+    Corps de la fonction:
+      Bloc avec 1 instructions
+        Retour
+          Expression binaire (opérateur 11)
+            Gauche:
+              Variable: x
+            Droite:
+              Littéral (nombre): 2
+
+=== IR Program ===
+
+Function: somme
+Parameters: a, b
+function somme:
+    param a
+    param b
+    t0 = a + b
+    return t0
+end function
+
+Function: double
+Parameters: x
+function double:
+    param x
+    t1 = 2
+    t2 = x * t1
+    return t2
+end function
+
+=== End IR Program ===

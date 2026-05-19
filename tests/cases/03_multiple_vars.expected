@@ -1,0 +1,43 @@
+=== Source (03_multiple_vars.cyp) ===
+entier x <- 10
+entier y <- 20
+entier z <- x + y
+entier w <- z * x
+
+
+=== AST ===
+Programme avec 4 déclarations
+  Variable: x
+    Initializer:
+      Littéral (nombre): 10
+  Variable: y
+    Initializer:
+      Littéral (nombre): 20
+  Variable: z
+    Initializer:
+      Expression binaire (opérateur 10)
+        Gauche:
+          Variable: x
+        Droite:
+          Variable: y
+  Variable: w
+    Initializer:
+      Expression binaire (opérateur 11)
+        Gauche:
+          Variable: z
+        Droite:
+          Variable: x
+
+=== IR Program ===
+
+Global Instructions:
+    t0 = 10
+    x = t0
+    t1 = 20
+    y = t1
+    t2 = x + y
+    z = t2
+    t3 = z * x
+    w = t3
+
+=== End IR Program ===
