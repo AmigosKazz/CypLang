@@ -82,7 +82,7 @@ char* generate_ir_from_literal(IRProgram* program, AstLiteral* literal) {
         case TOKEN_NUMBER:
             snprintf(value, sizeof(value), "%d", literal->value.int_value);
             break;
-        case TOKEN_REEL:
+        case TOKEN_FLOAT:
             snprintf(value, sizeof(value), "%f", literal->value.float_value);
             break;
         case TOKEN_STRING:
@@ -106,6 +106,7 @@ char* generate_ir_from_literal(IRProgram* program, AstLiteral* literal) {
 }
 
 char* generate_ir_from_variable(IRProgram* program, AstVariable* var) {
+    (void)program;
     return strdup(var->name);
 }
 
@@ -447,6 +448,7 @@ char* generate_ir_from_array_access(IRProgram* program, AstArrayAccess* array_ac
 }
 
 char* generate_ir_from_node(IRProgram* program, AstNode* node, char* result_var) {
+    (void)result_var; // reserved for future SSA-style hinting
     if (!node) return NULL;
 
     switch (node->type) {

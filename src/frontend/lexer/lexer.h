@@ -7,7 +7,8 @@
 typedef enum {
     TOKEN_EOF,
     TOKEN_IDENTIFIER,
-    TOKEN_NUMBER,
+    TOKEN_NUMBER,   // integer literal
+    TOKEN_FLOAT,    // float literal (e.g. 3.14)
     TOKEN_STRING,
     TOKEN_CHARACTER,
 

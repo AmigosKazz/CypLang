@@ -127,7 +127,7 @@ Token* parse_number(Lexer* lexer) {
     number[length] = '\0';
 
     Token* token = (Token*)malloc(sizeof(Token));
-    token->type = TOKEN_NUMBER;
+    token->type = is_float ? TOKEN_FLOAT : TOKEN_NUMBER;
     token->value = number;
     token->line = lexer->line;
     token->column = start_col;
@@ -174,7 +174,7 @@ Token* parse_character(Lexer* lexer) {
 
     if (lexer->current_char != '\'') {
         fprintf(stderr, "Error: Unexpected character '%c' at line %d, column %d\n",
-            lexer->line, lexer->column);
+            lexer->current_char, lexer->line, lexer->column);
         exit(EXIT_FAILURE);
     }
 
@@ -186,7 +186,7 @@ Token* parse_character(Lexer* lexer) {
     token->value[0] = value;
     token->value[1] = '\0';
     token->line = lexer->line;
-    token->column = lexer->column;
+    token->column = start_col;
 
     return token;
 }
