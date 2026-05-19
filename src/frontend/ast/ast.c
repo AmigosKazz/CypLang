@@ -115,6 +115,9 @@ void print_ast(AstNode* node, int depth) {
                 case TOKEN_NUMBER:
                     printf("%sLittéral (nombre): %d\n", indent, ((AstLiteral*)node)->value.int_value);
                     break;
+                case TOKEN_FLOAT:
+                    printf("%sLittéral (réel): %f\n", indent, ((AstLiteral*)node)->value.float_value);
+                    break;
                 case TOKEN_STRING:
                     printf("%sLittéral (chaîne): \"%s\"\n", indent, ((AstLiteral*)node)->value.string_value);
                     break;
@@ -202,6 +205,7 @@ AstNode* create_function_decl_node(char* name, AstNode** params, int param_count
 }
 
 AstNode* create_parameter_node(char* name, AstNode* type, AstNode* initializer) {
+    (void)initializer; // reserved for default-value support; unused for now
     AstParameter* param = (AstParameter*)malloc(sizeof(AstParameter));
     if (!param) {
         fprintf(stderr, "Erreur d'allocation mémoire\n");
@@ -332,7 +336,7 @@ AstNode* create_literal_node_float(float value) {
         exit(EXIT_FAILURE);
     }
     literal->base.type = AST_LITERAL;
-    literal->literal_type = TOKEN_NUMBER;
+    literal->literal_type = TOKEN_FLOAT;
     literal->value.float_value = value;
     return (AstNode*)literal;
 }

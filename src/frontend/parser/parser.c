@@ -189,6 +189,12 @@ AstNode* parse_primary(Parser* parser) {
         return create_literal_node_int(value);
     }
 
+    if (token_type == TOKEN_FLOAT) {
+        const float value = strtof(parser->current_token->value, NULL);
+        parser_advance(parser);
+        return create_literal_node_float(value);
+    }
+
     if (token_type == TOKEN_STRING) {
         char* value = strdup(parser->current_token->value);
         parser_advance(parser);
@@ -375,33 +381,79 @@ AstNode* parse_function_declaration(Parser* parser) {
         return NULL;
     }
 
-    // Paramètres - simplifiés pour l'instant
-    AstNode* params = NULL;
+    // Parameters: comma-separated list of [d|r|dr]? type name
+    AstNode** params = NULL;
+    int param_count = 0;
+    int param_capacity = 0;
+
+    while (parser->current_token->type != TOKEN_RPAREN &&
+           parser->current_token->type != TOKEN_EOF) {
+
+        // Optional passing-mode prefix (d/r/dr): 0=default, 1=d, 2=r, 3=dr
+        int p_mode = 0;
+        if (parser->current_token->type == TOKEN_D)        { p_mode = 1; parser_advance(parser); }
+        else if (parser->current_token->type == TOKEN_R)   { p_mode = 2; parser_advance(parser); }
+        else if (parser->current_token->type == TOKEN_DR)  { p_mode = 3; parser_advance(parser); }
+
+        // Type keyword (optional for now; just consume if present)
+        if (parser->current_token->type == TOKEN_ENTIER  ||
+            parser->current_token->type == TOKEN_REEL    ||
+            parser->current_token->type == TOKEN_CHAINE  ||
+            parser->current_token->type == TOKEN_BOOLEEN) {
+            parser_advance(parser);
+        }
+
+        if (parser->current_token->type != TOKEN_IDENTIFIER) {
+            fprintf(stderr, "Nom de paramètre attendu (ligne %d, colonne %d)\n",
+                    parser->current_token->line, parser->current_token->column);
+            for (int i = 0; i < param_count; i++) free_ast_node(params[i]);
+            free(params);
+            free(func_name);
+            return NULL;
+        }
+
+        char* param_name = strdup(parser->current_token->value);
+        parser_advance(parser);
+
+        AstNode* param = create_parameter_node(param_name, NULL, NULL);
+        ((AstParameter*)param)->param_type = p_mode;
+        free(param_name);
+
+        if (param_count >= param_capacity) {
+            param_capacity = param_capacity == 0 ? 4 : param_capacity * 2;
+            params = realloc(params, param_capacity * sizeof(AstNode*));
+        }
+        params[param_count++] = param;
+
+        if (parser->current_token->type == TOKEN_COMMA) {
+            parser_advance(parser);
+        }
+    }
 
     if (!expect(parser, TOKEN_RPAREN, ") attendu")) {
+        for (int i = 0; i < param_count; i++) free_ast_node(params[i]);
+        free(params);
         free(func_name);
         return NULL;
     }
 
-    // Type de retour optionnel
-    if (match(parser, TOKEN_DOT)) {  // Using DOT as colon placeholder
-        // Skip le type pour l'instant
-        parser_advance(parser);
-    }
-
     AstNode* body = parse_block(parser);
     if (!body) {
+        for (int i = 0; i < param_count; i++) free_ast_node(params[i]);
+        free(params);
         free(func_name);
         return NULL;
     }
 
     if (!expect(parser, TOKEN_FINFONC, "FINFONC attendu")) {
+        for (int i = 0; i < param_count; i++) free_ast_node(params[i]);
+        free(params);
         free(func_name);
         free_ast_node(body);
         return NULL;
     }
 
-    return create_function_decl_node(func_name, NULL, 0, NULL, body);
+    return create_function_decl_node(func_name, params, param_count, NULL, body);
 }
 
 AstNode* parse_variable_declaration(Parser* parser) {
