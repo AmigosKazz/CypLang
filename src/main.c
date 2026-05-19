@@ -6,6 +6,7 @@
 #include "frontend/parser/parser.h"
 #include "frontend/ast/ast.h"
 #include "middle/ir_generator.h"
+#include "backend/llvm_emitter.h"
 
 #define MAX_FILE_SIZE (1024 * 1024) // 1MB
 
@@ -72,6 +73,10 @@ int main(int argc, char* argv[]) {
 
     printf("\n");
     ir_print_program(ir);
+
+    // 4. LLVM emission (Phase 2.2: empty module skeleton)
+    printf("\n");
+    emit_llvm(ir, "cyplang_module");
 
     ir_free_program(ir);
     free_ast_node(ast);

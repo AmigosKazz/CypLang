@@ -41,3 +41,7 @@ Global Instructions:
     w = t3
 
 === End IR Program ===
+
+=== LLVM IR ===
+; ModuleID = 'cyplang_module'
+source_filename = "cyplang_module"
