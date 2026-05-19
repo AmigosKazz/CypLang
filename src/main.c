@@ -73,11 +73,7 @@ int main(int argc, char* argv[]) {
     printf("\n");
     ir_print_program(ir);
 
-    // TODO(phase1.5): ir_free_program double-frees because IR temp strings
-    // (t0, t1...) are shared by pointer across instructions instead of
-    // strdup'd at each consumption site. Re-enable once IR owns its strings.
-    // ir_free_program(ir);
-    (void)ir;
+    ir_free_program(ir);
     free_ast_node(ast);
     free_parser(parser);
     free_lexer(lexer);

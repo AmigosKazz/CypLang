@@ -75,21 +75,21 @@ void emit_instruction(IRProgram* program, IrInstruction* instruction) {
 char* generate_ir_from_literal(IRProgram* program, AstLiteral* literal) {
     char* result = new_temp(program);
     IrInstruction* inst = create_instruction(IR_ASSIGN);
-    inst->result = result;
+    inst->result = strdup(result);
 
-    char* value = (char*)malloc(100);
+    char value[128];
     switch (literal->literal_type) {
         case TOKEN_NUMBER:
-            sprintf(value, "%d", literal->value.int_value);
+            snprintf(value, sizeof(value), "%d", literal->value.int_value);
             break;
         case TOKEN_REEL:
-            sprintf(value, "%f", literal->value.float_value);
+            snprintf(value, sizeof(value), "%f", literal->value.float_value);
             break;
         case TOKEN_STRING:
-            sprintf(value, "\"%s\"", literal->value.string_value);
+            snprintf(value, sizeof(value), "\"%s\"", literal->value.string_value);
             break;
         case TOKEN_CHARACTER:
-            sprintf(value, "'%c'", literal->value.char_value);
+            snprintf(value, sizeof(value), "'%c'", literal->value.char_value);
             break;
         case TOKEN_VRAI:
             strcpy(value, "true");
@@ -100,7 +100,7 @@ char* generate_ir_from_literal(IRProgram* program, AstLiteral* literal) {
         default:
             strcpy(value, "0");
     }
-    inst->arg1 = value;
+    inst->arg1 = strdup(value);
     emit_instruction(program, inst);
     return result;
 }
@@ -162,12 +162,14 @@ char* generate_ir_from_binary_expr(IRProgram* program, AstBinaryExpr* expr) {
     }
 
     if (inst) {
-        inst->result = result;
-        inst->arg1 = left;
-        inst->arg2 = right;
+        inst->result = strdup(result);
+        inst->arg1 = strdup(left);
+        inst->arg2 = strdup(right);
         emit_instruction(program, inst);
     }
 
+    free(left);
+    free(right);
     return result;
 }
 
@@ -190,11 +192,12 @@ char* generate_ir_from_unary_expr(IRProgram* program, AstUnaryExpr* expr) {
     }
 
     if (inst) {
-        inst->result = result;
-        inst->arg1 = operand;
+        inst->result = strdup(result);
+        inst->arg1 = strdup(operand);
         emit_instruction(program, inst);
     }
 
+    free(operand);
     return result;
 }
 
@@ -207,18 +210,23 @@ char* generate_ir_from_assignment(IRProgram* program, AstAssignment* assign) {
         char* index = generate_ir_from_node(program, array_access->index, NULL);
 
         IrInstruction* inst = create_instruction(IR_ARRAY_ASSIGN);
-        inst->result = array;
-        inst->arg1 = index;
-        inst->arg2 = value;
+        inst->result = strdup(array);
+        inst->arg1 = strdup(index);
+        inst->arg2 = strdup(value);
         emit_instruction(program, inst);
-        return value;
+
+        free(array);
+        free(index);
+        return value; // caller owns
     } else {
         char* target = generate_ir_from_node(program, assign->target, NULL);
         IrInstruction* inst = create_instruction(IR_ASSIGN);
-        inst->result = target;
-        inst->arg1 = value;
+        inst->result = strdup(target);
+        inst->arg1 = strdup(value);
         emit_instruction(program, inst);
-        return target;
+
+        free(value);
+        return target; // caller owns
     }
 }
 
@@ -230,29 +238,32 @@ void generate_ir_from_if_statement(IRProgram* program, AstIfStatement* if_stmt) 
 
     // if !cond goto else_label
     IrInstruction* if_inst = create_instruction(IR_IF_GOTO);
-    if_inst->arg1 = condition;
+    if_inst->arg1 = strdup(condition);
     if_inst->label = strdup(else_label);
     emit_instruction(program, if_inst);
+    free(condition);
 
     // then branch
-    generate_ir_from_node(program, if_stmt->then_branch, NULL);
+    char* then_r = generate_ir_from_node(program, if_stmt->then_branch, NULL);
+    free(then_r);
 
     // goto end
     IrInstruction* goto_end = create_instruction(IR_GOTO);
     goto_end->label = strdup(end_label);
     emit_instruction(program, goto_end);
 
-    // else_label:
+    // else_label: (transfer ownership of else_label to this LABEL inst)
     IrInstruction* else_label_inst = create_instruction(IR_LABEL);
     else_label_inst->label = else_label;
     emit_instruction(program, else_label_inst);
 
     // else branch (optional)
     if (if_stmt->else_branch) {
-        generate_ir_from_node(program, if_stmt->else_branch, NULL);
+        char* else_r = generate_ir_from_node(program, if_stmt->else_branch, NULL);
+        free(else_r);
     }
 
-    // end_label:
+    // end_label: (transfer ownership)
     IrInstruction* end_label_inst = create_instruction(IR_LABEL);
     end_label_inst->label = end_label;
     emit_instruction(program, end_label_inst);
@@ -269,24 +280,29 @@ void generate_ir_from_while_statement(IRProgram* program, AstWhileStatement* whi
     char* condition = generate_ir_from_node(program, while_stmt->condition, NULL);
 
     IrInstruction* if_inst = create_instruction(IR_IF_GOTO);
-    if_inst->arg1 = condition;
-    if_inst->label = loop_end;
+    if_inst->arg1 = strdup(condition);
+    if_inst->label = strdup(loop_end);
     emit_instruction(program, if_inst);
+    free(condition);
 
-    generate_ir_from_node(program, while_stmt->body, NULL);
+    char* body_r = generate_ir_from_node(program, while_stmt->body, NULL);
+    free(body_r);
 
+    // goto loop_start: transfer ownership of loop_start
     IrInstruction* goto_start = create_instruction(IR_GOTO);
     goto_start->label = loop_start;
     emit_instruction(program, goto_start);
 
+    // loop_end label: transfer ownership of loop_end
     IrInstruction* end_label = create_instruction(IR_LABEL);
-    end_label->label = strdup(loop_end);
+    end_label->label = loop_end;
     emit_instruction(program, end_label);
 }
 
 void generate_ir_from_for_statement(IRProgram* program, AstForStatement* for_stmt) {
     if (for_stmt->init) {
-        generate_ir_from_node(program, for_stmt->init, NULL);
+        char* r = generate_ir_from_node(program, for_stmt->init, NULL);
+        free(r);
     }
 
     char* loop_start = new_label(program);
@@ -299,23 +315,27 @@ void generate_ir_from_for_statement(IRProgram* program, AstForStatement* for_stm
     if (for_stmt->condition) {
         char* condition = generate_ir_from_node(program, for_stmt->condition, NULL);
         IrInstruction* if_inst = create_instruction(IR_IF_GOTO);
-        if_inst->arg1 = condition;
-        if_inst->label = loop_end;
+        if_inst->arg1 = strdup(condition);
+        if_inst->label = strdup(loop_end);
         emit_instruction(program, if_inst);
+        free(condition);
     }
 
-    generate_ir_from_node(program, for_stmt->body, NULL);
+    char* body_r = generate_ir_from_node(program, for_stmt->body, NULL);
+    free(body_r);
 
     if (for_stmt->update) {
-        generate_ir_from_node(program, for_stmt->update, NULL);
+        char* upd_r = generate_ir_from_node(program, for_stmt->update, NULL);
+        free(upd_r);
     }
 
+    // transfer ownership
     IrInstruction* goto_start = create_instruction(IR_GOTO);
     goto_start->label = loop_start;
     emit_instruction(program, goto_start);
 
     IrInstruction* end_label = create_instruction(IR_LABEL);
-    end_label->label = strdup(loop_end);
+    end_label->label = loop_end;
     emit_instruction(program, end_label);
 }
 
@@ -326,15 +346,16 @@ void generate_ir_from_return_statement(IRProgram* program, AstReturnStatement* r
     }
 
     IrInstruction* inst = create_instruction(IR_RETURN);
-    inst->arg1 = value;
+    inst->arg1 = value ? strdup(value) : NULL;
     emit_instruction(program, inst);
+    free(value);
 }
 
 char* generate_ir_from_function_call(IRProgram* program, AstFunctionCall* call) {
     char* result = new_temp(program);
 
     IrInstruction* inst = create_instruction(IR_CALL);
-    inst->result = result;
+    inst->result = strdup(result);
     inst->arg1 = strdup(call->name);
     emit_instruction(program, inst);
 
@@ -343,7 +364,8 @@ char* generate_ir_from_function_call(IRProgram* program, AstFunctionCall* call) 
 
 void generate_ir_from_block(IRProgram* program, AstBlock* block) {
     for (int i = 0; i < block->statement_count; i++) {
-        generate_ir_from_node(program, block->statements[i], NULL);
+        char* r = generate_ir_from_node(program, block->statements[i], NULL);
+        free(r); // safe even if NULL
     }
 }
 
@@ -387,7 +409,8 @@ void generate_ir_from_function_decl(IRProgram* program, AstFunctionDeclaration* 
     }
 
     if (func_decl->body) {
-        generate_ir_from_node(program, func_decl->body, NULL);
+        char* body_r = generate_ir_from_node(program, func_decl->body, NULL);
+        free(body_r);
     }
 
     IrInstruction* func_end = create_instruction(IR_FUNC_END);
@@ -401,8 +424,9 @@ void generate_ir_from_variable_decl(IRProgram* program, AstVariableDeclaration* 
         char* value = generate_ir_from_node(program, var_decl->initializer, NULL);
         IrInstruction* inst = create_instruction(IR_ASSIGN);
         inst->result = strdup(var_decl->name);
-        inst->arg1 = value;
+        inst->arg1 = strdup(value);
         emit_instruction(program, inst);
+        free(value);
     }
 }
 
@@ -412,11 +436,13 @@ char* generate_ir_from_array_access(IRProgram* program, AstArrayAccess* array_ac
     char* result = new_temp(program);
 
     IrInstruction* inst = create_instruction(IR_ARRAY_ACCESS);
-    inst->result = result;
-    inst->arg1 = array;
-    inst->arg2 = index;
+    inst->result = strdup(result);
+    inst->arg1 = strdup(array);
+    inst->arg2 = strdup(index);
     emit_instruction(program, inst);
 
+    free(array);
+    free(index);
     return result;
 }
 
@@ -427,7 +453,8 @@ char* generate_ir_from_node(IRProgram* program, AstNode* node, char* result_var)
         case AST_PROGRAM: {
             AstProgram* prog = (AstProgram*)node;
             for (int i = 0; i < prog->declaration_count; i++) {
-                generate_ir_from_node(program, prog->declarations[i], NULL);
+                char* r = generate_ir_from_node(program, prog->declarations[i], NULL);
+                free(r); // safe even if NULL
             }
             return NULL;
         }
