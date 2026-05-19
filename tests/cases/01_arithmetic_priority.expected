@@ -49,3 +49,46 @@ Global Instructions:
 === LLVM IR ===
 ; ModuleID = 'cyplang_module'
 source_filename = "cyplang_module"
+
+define i32 @main() {
+entry:
+  %b = alloca i32, align 4
+  %t913 = alloca i32, align 4
+  %t8 = alloca i32, align 4
+  %t710 = alloca i32, align 4
+  %t6 = alloca i32, align 4
+  %t5 = alloca i32, align 4
+  %a = alloca i32, align 4
+  %t46 = alloca i32, align 4
+  %t33 = alloca i32, align 4
+  %t2 = alloca i32, align 4
+  %t1 = alloca i32, align 4
+  %t0 = alloca i32, align 4
+  store i32 1, ptr %t0, align 4
+  store i32 2, ptr %t1, align 4
+  store i32 3, ptr %t2, align 4
+  %t11 = load i32, ptr %t1, align 4
+  %t22 = load i32, ptr %t2, align 4
+  %t3 = mul i32 %t11, %t22
+  store i32 %t3, ptr %t33, align 4
+  %t04 = load i32, ptr %t0, align 4
+  %t35 = load i32, ptr %t33, align 4
+  %t4 = add i32 %t04, %t35
+  store i32 %t4, ptr %t46, align 4
+  %t47 = load i32, ptr %t46, align 4
+  store i32 %t47, ptr %a, align 4
+  store i32 1, ptr %t5, align 4
+  store i32 2, ptr %t6, align 4
+  %t58 = load i32, ptr %t5, align 4
+  %t69 = load i32, ptr %t6, align 4
+  %t7 = add i32 %t58, %t69
+  store i32 %t7, ptr %t710, align 4
+  store i32 3, ptr %t8, align 4
+  %t711 = load i32, ptr %t710, align 4
+  %t812 = load i32, ptr %t8, align 4
+  %t9 = mul i32 %t711, %t812
+  store i32 %t9, ptr %t913, align 4
+  %t914 = load i32, ptr %t913, align 4
+  store i32 %t914, ptr %b, align 4
+  ret i32 0
+}

@@ -39,3 +39,28 @@ Global Instructions:
 === LLVM IR ===
 ; ModuleID = 'cyplang_module'
 source_filename = "cyplang_module"
+
+define i32 @main() {
+entry:
+  %c = alloca i32, align 4
+  %t4 = alloca i32, align 4
+  %t35 = alloca i32, align 4
+  %t2 = alloca i32, align 4
+  %b = alloca i32, align 4
+  %t1 = alloca i32, align 4
+  %a = alloca i32, align 4
+  %t0 = alloca i32, align 4
+  store i32 5, ptr %t0, align 4
+  %t01 = load i32, ptr %t0, align 4
+  store i32 %t01, ptr %a, align 4
+  %t12 = load i32, ptr %t1, align 4
+  store i32 %t12, ptr %b, align 4
+  store i32 3, ptr %t2, align 4
+  %a3 = load i32, ptr %a, align 4
+  %t24 = load i32, ptr %t2, align 4
+  %t3 = add i32 %a3, %t24
+  store i32 %t3, ptr %t35, align 4
+  %t46 = load i32, ptr %t4, align 4
+  store i32 %t46, ptr %c, align 4
+  ret i32 0
+}
