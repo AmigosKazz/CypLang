@@ -60,6 +60,36 @@ end function
 ; ModuleID = 'cyplang_module'
 source_filename = "cyplang_module"
 
+define i32 @somme(i32 %a1, i32 %b2) {
+entry:
+  %t05 = alloca i32, align 4
+  %b = alloca i32, align 4
+  %a = alloca i32, align 4
+  store i32 %a1, ptr %a, align 4
+  store i32 %b2, ptr %b, align 4
+  %a3 = load i32, ptr %a, align 4
+  %b4 = load i32, ptr %b, align 4
+  %t0 = add i32 %a3, %b4
+  store i32 %t0, ptr %t05, align 4
+  %t06 = load i32, ptr %t05, align 4
+  ret i32 %t06
+}
+
+define i32 @double(i32 %x1) {
+entry:
+  %t24 = alloca i32, align 4
+  %t1 = alloca i32, align 4
+  %x = alloca i32, align 4
+  store i32 %x1, ptr %x, align 4
+  store i32 2, ptr %t1, align 4
+  %x2 = load i32, ptr %x, align 4
+  %t13 = load i32, ptr %t1, align 4
+  %t2 = mul i32 %x2, %t13
+  store i32 %t2, ptr %t24, align 4
+  %t25 = load i32, ptr %t24, align 4
+  ret i32 %t25
+}
+
 define i32 @main() {
 entry:
   ret i32 0

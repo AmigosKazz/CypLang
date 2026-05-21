@@ -143,6 +143,7 @@ static TypedValue arg_to_typed(EmitCtx* ec, const char* arg) {
 // ---------- per-instruction emission ----------
 
 // Emit a single IR instruction. Unknown ops are silently skipped (handled in later phases).
+// IR_RETURN is handled here only as a fallback; functions handle it in emit_function below.
 static void emit_one(EmitCtx* ec, IrInstruction* inst) {
     switch (inst->op) {
         case IR_ASSIGN: {
@@ -176,11 +177,75 @@ static void emit_one(EmitCtx* ec, IrInstruction* inst) {
             LLVMBuildStore(ec->builder, res, s->alloca);
             break;
         }
+        case IR_RETURN: {
+            if (inst->arg1) {
+                TypedValue v = arg_to_typed(ec, inst->arg1);
+                LLVMBuildRet(ec->builder, v.value);
+            } else {
+                LLVMBuildRet(ec->builder, LLVMConstInt(ec->i32_type, 0, 0));
+            }
+            break;
+        }
         default:
-            // IR_NEG / IR_NOT / comparisons / control flow / calls / functions:
+            // IR_NEG / IR_NOT / comparisons / control flow / calls:
             // not yet supported, will be added in later jalons.
             break;
     }
+}
+
+// ---------- function emission ----------
+
+// thread proper types from the AST/IR (cyplang IR is currently untyped).
+static void emit_function(EmitCtx* ec, IrFunction* func) {
+    // Build the signature: (i32, i32, ...) -> i32
+    LLVMTypeRef* param_types = NULL;
+    if (func->param_count > 0) {
+        param_types = malloc(func->param_count * sizeof(LLVMTypeRef));
+        for (int i = 0; i < func->param_count; i++) param_types[i] = ec->i32_type;
+    }
+    LLVMTypeRef func_type = LLVMFunctionType(ec->i32_type, param_types,
+                                             (unsigned)func->param_count, /*IsVarArg=*/0);
+    free(param_types);
+
+    LLVMValueRef llvm_func = LLVMAddFunction(ec->module, func->name, func_type);
+    LLVMBasicBlockRef entry = LLVMAppendBasicBlockInContext(ec->ctx, llvm_func, "entry");
+    LLVMPositionBuilderAtEnd(ec->builder, entry);
+
+    // Save outer scope (we're about to enter a fresh symbol table for this function).
+    Symbol* saved_symbols = ec->symbols;
+    LLVMValueRef saved_function = ec->current_function;
+    ec->symbols = NULL;
+    ec->current_function = llvm_func;
+
+    // For each parameter: alloca + store the incoming LLVM param into it.
+    // This lets the body load/store params just like locals (mem2reg will clean it up).
+    for (int i = 0; i < func->param_count; i++) {
+        const char* pname = func->params[i];
+        Symbol* s = sym_get_or_create(ec, pname, ec->i32_type);
+        LLVMValueRef param_val = LLVMGetParam(llvm_func, (unsigned)i);
+        LLVMSetValueName2(param_val, pname, strlen(pname));
+        LLVMBuildStore(ec->builder, param_val, s->alloca);
+    }
+
+    // Walk the function's IR. IR_FUNC_BEGIN / IR_PARAM / IR_FUNC_END are pure
+    // bookkeeping at the IR level and have no LLVM counterpart here.
+    for (IrInstruction* inst = func->instructions; inst; inst = inst->next) {
+        if (inst->op == IR_FUNC_BEGIN || inst->op == IR_PARAM || inst->op == IR_FUNC_END) {
+            continue;
+        }
+        emit_one(ec, inst);
+    }
+
+    // Fallback: every basic block must end with a terminator.
+    LLVMBasicBlockRef current_block = LLVMGetInsertBlock(ec->builder);
+    if (!LLVMGetBasicBlockTerminator(current_block)) {
+        LLVMBuildRet(ec->builder, LLVMConstInt(ec->i32_type, 0, 0));
+    }
+
+    // Restore the outer scope.
+    sym_free_all(ec);
+    ec->symbols = saved_symbols;
+    ec->current_function = saved_function;
 }
 
 // ---------- public entry point ----------
@@ -193,8 +258,13 @@ int emit_llvm(IRProgram* program, const char* module_name) {
     ec.i32_type = LLVMInt32TypeInContext(ec.ctx);
     ec.double_type = LLVMDoubleTypeInContext(ec.ctx);
 
-    // Wrap global IR instructions in `main` (i32) so clang/lld can link it directly.
-    // Phase 2.5 will need to rename this if the user defines their own `main`.
+    // Emit user-defined functions first, so global code in `main` can call them.
+    for (IrFunction* f = program ? program->functions : NULL; f; f = f->next) {
+        emit_function(&ec, f);
+    }
+
+    // Wrap global IR instructions in `main` (i32).
+    // TODO(phase 2.5.1): rename this if the user defines their own `main`.
     LLVMTypeRef main_type = LLVMFunctionType(ec.i32_type, NULL, 0, /*IsVarArg=*/0);
     ec.current_function = LLVMAddFunction(ec.module, "main", main_type);
     LLVMBasicBlockRef entry = LLVMAppendBasicBlockInContext(ec.ctx, ec.current_function, "entry");
