@@ -1,0 +1,37 @@
+=== Source (06_hello_world.cyp) ===
+afficher("Hello, World!")
+
+
+=== AST ===
+Programme avec 1 déclarations
+  Appel de fonction: afficher (1 arg)
+    Argument 1:
+      Littéral (chaîne): "Hello, World!"
+
+=== IR Program ===
+
+Global Instructions:
+    t0 = "Hello, World!"
+    param t0
+    t1 = call afficher
+
+=== End IR Program ===
+
+=== LLVM IR ===
+; ModuleID = 'cyplang_module'
+source_filename = "cyplang_module"
+
+@str = private unnamed_addr constant [14 x i8] c"Hello, World!\00", align 1
+
+declare i32 @printf(ptr, ...)
+
+define i32 @main() {
+entry:
+  %t12 = alloca i32, align 4
+  %t0 = alloca ptr, align 8
+  store ptr @str, ptr %t0, align 8
+  %t01 = load ptr, ptr %t0, align 8
+  %t1 = call i32 (ptr, ...) @printf(ptr %t01)
+  store i32 %t1, ptr %t12, align 4
+  ret i32 0
+}

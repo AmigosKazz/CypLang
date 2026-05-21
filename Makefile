@@ -2,8 +2,14 @@
 
 # Compiler and flags
 CC = gcc
-CFLAGS = -Wall -Wextra -std=c11 -I./include
-LDFLAGS = -lm
+
+# LLVM detection: prefer llvm-config in PATH, fall back to Homebrew keg-only path.
+LLVM_CONFIG ?= $(shell command -v llvm-config 2>/dev/null || echo /opt/homebrew/opt/llvm/bin/llvm-config)
+LLVM_CFLAGS := $(shell $(LLVM_CONFIG) --cflags 2>/dev/null)
+LLVM_LDFLAGS := $(shell $(LLVM_CONFIG) --ldflags --libs core --system-libs 2>/dev/null)
+
+CFLAGS = -Wall -Wextra -std=c11 -I./include $(LLVM_CFLAGS)
+LDFLAGS = -lm $(LLVM_LDFLAGS)
 
 # Directories
 SRC_DIR = src

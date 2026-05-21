@@ -27,3 +27,29 @@ Global Instructions:
     n = t2
 
 === End IR Program ===
+
+=== LLVM IR ===
+; ModuleID = 'cyplang_module'
+source_filename = "cyplang_module"
+
+declare i32 @printf(ptr, ...)
+
+define i32 @main() {
+entry:
+  %n = alloca i32, align 4
+  %t2 = alloca i32, align 4
+  %e = alloca double, align 8
+  %t1 = alloca double, align 8
+  %pi = alloca double, align 8
+  %t0 = alloca double, align 8
+  store double 3.140000e+00, ptr %t0, align 8
+  %t01 = load double, ptr %t0, align 8
+  store double %t01, ptr %pi, align 8
+  store double 2.710000e+00, ptr %t1, align 8
+  %t12 = load double, ptr %t1, align 8
+  store double %t12, ptr %e, align 8
+  store i32 42, ptr %t2, align 4
+  %t23 = load i32, ptr %t2, align 4
+  store i32 %t23, ptr %n, align 4
+  ret i32 0
+}

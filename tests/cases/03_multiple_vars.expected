@@ -41,3 +41,40 @@ Global Instructions:
     w = t3
 
 === End IR Program ===
+
+=== LLVM IR ===
+; ModuleID = 'cyplang_module'
+source_filename = "cyplang_module"
+
+declare i32 @printf(ptr, ...)
+
+define i32 @main() {
+entry:
+  %w = alloca i32, align 4
+  %t39 = alloca i32, align 4
+  %z = alloca i32, align 4
+  %t25 = alloca i32, align 4
+  %y = alloca i32, align 4
+  %t1 = alloca i32, align 4
+  %x = alloca i32, align 4
+  %t0 = alloca i32, align 4
+  store i32 10, ptr %t0, align 4
+  %t01 = load i32, ptr %t0, align 4
+  store i32 %t01, ptr %x, align 4
+  store i32 20, ptr %t1, align 4
+  %t12 = load i32, ptr %t1, align 4
+  store i32 %t12, ptr %y, align 4
+  %x3 = load i32, ptr %x, align 4
+  %y4 = load i32, ptr %y, align 4
+  %t2 = add i32 %x3, %y4
+  store i32 %t2, ptr %t25, align 4
+  %t26 = load i32, ptr %t25, align 4
+  store i32 %t26, ptr %z, align 4
+  %z7 = load i32, ptr %z, align 4
+  %x8 = load i32, ptr %x, align 4
+  %t3 = mul i32 %z7, %x8
+  store i32 %t3, ptr %t39, align 4
+  %t310 = load i32, ptr %t39, align 4
+  store i32 %t310, ptr %w, align 4
+  ret i32 0
+}

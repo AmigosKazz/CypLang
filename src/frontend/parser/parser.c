@@ -87,19 +87,17 @@ AstNode* parse_declaration(Parser* parser) {
     if (parser->current_token->type == TOKEN_DEBFONC) {
         return parse_function_declaration(parser);
     }
-    else if (parser->current_token->type == TOKEN_ENTIER ||
-             parser->current_token->type == TOKEN_REEL ||
-             parser->current_token->type == TOKEN_CHAINE ||
-             parser->current_token->type == TOKEN_CHARACTER ||
-             parser->current_token->type == TOKEN_BOOLEEN) {
+    if (parser->current_token->type == TOKEN_ENTIER ||
+        parser->current_token->type == TOKEN_REEL ||
+        parser->current_token->type == TOKEN_CHAINE ||
+        parser->current_token->type == TOKEN_CHARACTER ||
+        parser->current_token->type == TOKEN_BOOLEEN) {
         return parse_variable_declaration(parser);
-             }
-
-    fprintf(stderr, "Erreur de syntaxe ligne %d, colonne %d: déclaration attendue\n",
-            parser->current_token->line, parser->current_token->column);
-    parser_advance(parser);
-
-    return NULL;
+    }
+    // Anything else at the top level: treat as a statement (expression statement,
+    // function call, control flow). This makes `afficher("Hello")` a valid top-level
+    // statement, which Phase 2.7 needs for Hello World.
+    return parse_statement(parser);
 }
 
 AstNode*  parse_expression(Parser* parser) {

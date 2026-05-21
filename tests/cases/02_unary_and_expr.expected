@@ -1,3 +1,5 @@
+warning: unknown IR symbol 't1' — defaulting to i32 0
+warning: unknown IR symbol 't4' — defaulting to i32 0
 === Source (02_unary_and_expr.cyp) ===
 entier a <- 5
 entier b <- -a
@@ -35,3 +37,30 @@ Global Instructions:
     c = t4
 
 === End IR Program ===
+
+=== LLVM IR ===
+; ModuleID = 'cyplang_module'
+source_filename = "cyplang_module"
+
+declare i32 @printf(ptr, ...)
+
+define i32 @main() {
+entry:
+  %c = alloca i32, align 4
+  %t34 = alloca i32, align 4
+  %t2 = alloca i32, align 4
+  %b = alloca i32, align 4
+  %a = alloca i32, align 4
+  %t0 = alloca i32, align 4
+  store i32 5, ptr %t0, align 4
+  %t01 = load i32, ptr %t0, align 4
+  store i32 %t01, ptr %a, align 4
+  store i32 0, ptr %b, align 4
+  store i32 3, ptr %t2, align 4
+  %a2 = load i32, ptr %a, align 4
+  %t23 = load i32, ptr %t2, align 4
+  %t3 = add i32 %a2, %t23
+  store i32 %t3, ptr %t34, align 4
+  store i32 0, ptr %c, align 4
+  ret i32 0
+}

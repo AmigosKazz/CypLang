@@ -353,8 +353,17 @@ void generate_ir_from_return_statement(IRProgram* program, AstReturnStatement* r
 }
 
 char* generate_ir_from_function_call(IRProgram* program, AstFunctionCall* call) {
-    char* result = new_temp(program);
+    // Emit IR_PARAM for each argument (evaluated left-to-right).
+    // The backend will pop them when it sees the IR_CALL that follows.
+    for (int i = 0; i < call->argument_count; i++) {
+        char* arg = generate_ir_from_node(program, call->arguments[i], NULL);
+        IrInstruction* p = create_instruction(IR_PARAM);
+        p->arg1 = arg ? strdup(arg) : NULL;
+        emit_instruction(program, p);
+        free(arg);
+    }
 
+    char* result = new_temp(program);
     IrInstruction* inst = create_instruction(IR_CALL);
     inst->result = strdup(result);
     inst->arg1 = strdup(call->name);
