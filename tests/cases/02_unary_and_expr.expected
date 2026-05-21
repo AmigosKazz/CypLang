@@ -42,6 +42,8 @@ Global Instructions:
 ; ModuleID = 'cyplang_module'
 source_filename = "cyplang_module"
 
+declare i32 @printf(ptr, ...)
+
 define i32 @main() {
 entry:
   %c = alloca i32, align 4

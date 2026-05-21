@@ -60,6 +60,8 @@ end function
 ; ModuleID = 'cyplang_module'
 source_filename = "cyplang_module"
 
+declare i32 @printf(ptr, ...)
+
 define i32 @somme(i32 %a1, i32 %b2) {
 entry:
   %t05 = alloca i32, align 4
