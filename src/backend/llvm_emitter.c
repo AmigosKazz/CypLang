@@ -250,7 +250,7 @@ static void emit_function(EmitCtx* ec, IrFunction* func) {
 
 // ---------- public entry point ----------
 
-int emit_llvm(IRProgram* program, const char* module_name) {
+int emit_llvm(IRProgram* program, const char* module_name, const char* output_path) {
     EmitCtx ec = {0};
     ec.ctx = LLVMContextCreate();
     ec.module = LLVMModuleCreateWithNameInContext(module_name, ec.ctx);
@@ -277,13 +277,24 @@ int emit_llvm(IRProgram* program, const char* module_name) {
     // Always terminate with `ret i32 0` so the module verifies.
     LLVMBuildRet(ec.builder, LLVMConstInt(ec.i32_type, 0, 0));
 
-    char* ir_text = LLVMPrintModuleToString(ec.module);
-    printf("=== LLVM IR ===\n%s", ir_text);
-    LLVMDisposeMessage(ir_text);
+    int rc = 0;
+    if (output_path) {
+        char* err = NULL;
+        if (LLVMPrintModuleToFile(ec.module, output_path, &err) != 0) {
+            fprintf(stderr, "Failed to write LLVM IR to %s: %s\n",
+                    output_path, err ? err : "(unknown error)");
+            if (err) LLVMDisposeMessage(err);
+            rc = 1;
+        }
+    } else {
+        char* ir_text = LLVMPrintModuleToString(ec.module);
+        printf("=== LLVM IR ===\n%s", ir_text);
+        LLVMDisposeMessage(ir_text);
+    }
 
     sym_free_all(&ec);
     LLVMDisposeBuilder(ec.builder);
     LLVMDisposeModule(ec.module);
     LLVMContextDispose(ec.ctx);
-    return 0;
+    return rc;
 }
