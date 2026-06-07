@@ -77,6 +77,10 @@ AstNode* parse_program (Parser* parser) {
             }
             program->declarations[program->declaration_count] = declaration;
             program->declaration_count++;
+        } else {
+            if (parser->current_token->type != TOKEN_EOF) {
+                parser_advance(parser);
+            }
         }
     }
 
@@ -294,7 +298,7 @@ AstNode* parse_function_call(Parser* parser, char* name) {
 }
 
 AstNode* parse_if_statement(Parser* parser) {
-    parser_advance(parser);
+    // No advance here — parse_statement already consumed TOKEN_SI via match().
     AstNode* condition = parse_expression(parser);
     if (!condition) {
         return NULL;
@@ -334,8 +338,7 @@ AstNode* parse_if_statement(Parser* parser) {
 }
 
 AstNode* parse_while_statement(Parser* parser) {
-    parser_advance(parser);
-
+    // No advance here — parse_statement already consumed TOKEN_TANTQUE via match().
     AstNode* condition = parse_expression(parser);
     if (!condition) {
         return NULL;
@@ -503,8 +506,18 @@ AstNode* parse_statement(Parser* parser) {
         return parse_variable_declaration(parser);
     }
 
-    // Otherwise it's an expression statement
-    return parse_expression(parser);
+    // Otherwise: expression, or assignment (`x <- expr`)
+    AstNode* left = parse_expression(parser);
+    if (left && parser->current_token->type == TOKEN_ASSIGN) {
+        parser_advance(parser); // consume <-
+        AstNode* value = parse_expression(parser);
+        if (!value) {
+            free_ast_node(left);
+            return NULL;
+        }
+        return create_assignment_node(left, value);
+    }
+    return left;
 }
 
 AstNode* parse_return_statement(Parser* parser) {
